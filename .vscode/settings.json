@@ -1,0 +1,6 @@
+{
+	"code-runner.executorMap": {
+		"c": "cd $dir && gcc $fileName -lraylib -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+		"cpp": "cd $dir && g++ $fileName -lraylib -o $fileNameWithoutExt && $dir$fileNameWithoutExt"
+	}
+}
