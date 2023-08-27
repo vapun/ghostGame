@@ -59,6 +59,8 @@ int main()
 
     SetTargetFPS(60);
 
+    bool ghostAppeared[maxGhosts] = {false};
+
     while (!WindowShouldClose())
     {
         if (!gameOver)
@@ -207,6 +209,7 @@ int main()
 
             for (int i = 0; i < maxGhosts; i++)
             {
+                ghostAppeared[i] = false;
                 ghostActive[i] = false;
                 ghostSpawnTimers = 0.0f;
                 ghostSpeedsX[i] = (GetRandomValue(0, 1) == 0 ? 1 : -1);
@@ -225,18 +228,33 @@ int main()
             {
                 float faceRight = -1.f;
                 if (ghostSpeedsX[i] > 0)
-                {
+            {   
                     faceRight = -1.f;
                 }
                 else
                 {
                     faceRight = 1.f;
+                }   
+
+                if (!ghostAppeared[i])
+                {
+                    Rectangle source{ghostAppearsFrame * ghostAppearsWidth, 0.f, faceRight * ghostAppearsWidth, ghostAppearsHeight};
+                    DrawTexturePro(ghostAppears, source, {ghosts[i].x - ghostAppearsWidth + 4, ghosts[i].y - ghostAppearsHeight + 20, ghostAppearsWidth * scale, ghostAppearsHeight * scale}, {0.f, 0.f}, 0.f, WHITE);
+
+                    if (ghostAppearsFrame >= 5)
+                    {
+                        ghostAppeared[i] = true;
+                    }
                 }
-                Rectangle source{ghostIdleFrame * ghostIdleWidth, 0.f, faceRight * ghostIdleWidth, ghostIdleHeight};
-                DrawTexturePro(ghostIdle, source, {ghosts[i].x - ghostIdleWidth + 4, ghosts[i].y - ghostIdleHeight + 20, ghostIdleWidth * scale, ghostIdleHeight * scale}, {0.f, 0.f}, 0.f, WHITE);
-                DrawRectangleLines(ghosts[i].x,ghosts[i].y,ghosts[i].width,ghosts[i].height, GREEN);
+                else
+                {
+                    Rectangle source{ghostIdleFrame * ghostIdleWidth, 0.f, faceRight * ghostIdleWidth, ghostIdleHeight};
+                    DrawTexturePro(ghostIdle, source, {ghosts[i].x - ghostIdleWidth + 4, ghosts[i].y - ghostIdleHeight + 20, ghostIdleWidth * scale, ghostIdleHeight * scale}, {0.f, 0.f}, 0.f, WHITE);
+                }
+
+                DrawRectangleLines(ghosts[i].x, ghosts[i].y, ghosts[i].width, ghosts[i].height, GREEN);
             }
-        } //for (int i = 0; i <= maxGhosts; i++)
+        }
         
         DrawText(TextFormat("Score: %d", score), 10, 10, 20, GREEN);
         DrawText(TextFormat("Ghost: %d/%d", activeGhosts ,maxGhosts), 10, 40, 20, PURPLE);
