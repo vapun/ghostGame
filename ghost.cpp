@@ -26,14 +26,14 @@ int main()
     Rectangle player = {(screenWidth - 60) / 2, (screenHeight - 120) / 2, 60, 120};
 
     // Ghost
-    const int maxGhosts = 100;
+    const int maxGhosts = 10;
     Rectangle ghosts[maxGhosts];
     int ghostSpeedsX[maxGhosts];
     int ghostSpeedsY[maxGhosts];
     float ghostSpawnTimers;
     float ghostChangeDirTimers;
-    const float ghostSpawnTime = 3.0f; // Ghoat will spawn every X.XX sec
-    float ghostChangeDirTime = 2.0f; // Ghost will change movement every X.XX sec
+    const float ghostSpawnTime = 2.0f; // Ghoat will spawn every X.XX sec
+    float ghostChangeDirTime = 1.0f; // Ghost will change movement every X.XX sec
     int activeGhosts = 0;
     bool ghostActive[maxGhosts]{};
     float ghostAppearsWidth = ghostAppears.width / 6;
@@ -42,6 +42,12 @@ int main()
     float ghostIdleHeight = ghostIdle.height;
     float ghostVanishWidth = ghostVanish.width / 7;
     float ghostVanishHeight = ghostVanish.height;
+
+    // Bullet
+    int maxbullet = 10;
+    int bullet = maxbullet;
+    float reloadtime = 2.5;
+    float reloadtimer;
 
     for (int i = 0; i < maxGhosts; i++)
     {
@@ -65,6 +71,16 @@ int main()
     {
         if (!gameOver)
         {
+            if (bullet < maxbullet)
+            {
+                reloadtimer += GetFrameTime();
+                if (reloadtimer >= reloadtime)
+                {
+                    bullet++;
+                    reloadtimer = 0;
+                }
+            }
+
             runningTime += GetFrameTime();
             if (runningTime >= updateTime)
             {
@@ -154,14 +170,18 @@ int main()
             // Shooting ghosts when spacebar is pressed
             if (IsKeyPressed(KEY_SPACE)) 
             {
-                for (int i = 0; i < maxGhosts; i++) 
+                if (bullet > 0)
                 {
-                    // Check collision between crosshair and ghost
-                    if (ghostActive[i] && CheckCollisionRecs(crosshair, ghosts[i])) 
+                    bullet--;
+                    for (int i = 0; i < maxGhosts; i++) 
                     {
-                        ghostActive[i] = false; // Ghost disappears
-                        activeGhosts--;
-                        score += 1; // Increase score
+                        // Check collision between crosshair and ghost
+                        if (ghostActive[i] && CheckCollisionRecs(crosshair, ghosts[i])) 
+                        {
+                            ghostActive[i] = false; // Ghost disappears
+                            activeGhosts--;
+                            score += 1; // Increase score
+                        }
                     }
                 }
             } //if (IsKeyPressed(KEY_SPACE)) 
@@ -206,6 +226,8 @@ int main()
             activeGhosts = 0;
             score = 0;
             timetest = 0;
+            bullet = maxbullet;
+            reloadtimer = 0;
 
             for (int i = 0; i < maxGhosts; i++)
             {
@@ -258,7 +280,9 @@ int main()
         
         DrawText(TextFormat("Score: %d", score), 10, 10, 20, GREEN);
         DrawText(TextFormat("Ghost: %d/%d", activeGhosts ,maxGhosts), 10, 40, 20, PURPLE);
-        DrawText(TextFormat("Counting: %.1f", timetest), 10, 70, 20, WHITE);
+        DrawText(TextFormat("Spawning: %.1f", timetest), 10, 70, 20, PURPLE);
+        DrawText(TextFormat("Bullet: %d", bullet), 10, 100, 20, YELLOW);
+        DrawText(TextFormat("Reloading: %.1f", reloadtime-reloadtimer), 10, 130, 20, YELLOW);
 
         DrawRectangle(crosshair.x - 10, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
         DrawRectangle(crosshair.x + crosshair.width, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
