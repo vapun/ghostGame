@@ -2,6 +2,7 @@
 
 int ghostAppearsFrame{};
 int ghostIdleFrame{};
+int ghostVanishFrame{};
 const float updateTime{1.f / 12.f};
 float runningTime{};
 float scale{2.8}; // Scale background & ghost
@@ -33,9 +34,10 @@ int main()
     float ghostSpawnTimers;
     float ghostChangeDirTimers;
     const float ghostSpawnTime = 2.0f; // Ghoat will spawn every X.XX sec
-    float ghostChangeDirTime = 1.0f; // Ghost will change movement every X.XX sec
+    float ghostChangeDirTime = 2.0f; // Ghost will change movement every X.XX sec
     int activeGhosts = 0;
     bool ghostActive[maxGhosts]{};
+
     float ghostAppearsWidth = ghostAppears.width / 6;
     float ghostAppearsHeight = ghostAppears.height;
     float ghostIdleWidth = ghostIdle.width / 7;
@@ -43,17 +45,20 @@ int main()
     float ghostVanishWidth = ghostVanish.width / 7;
     float ghostVanishHeight = ghostVanish.height;
 
+    bool ghostAppeared[maxGhosts] = {false};
+    bool ghostVanished[maxGhosts] = {false};
+
     // Bullet
     int maxbullet = 10;
     int bullet = maxbullet;
-    float reloadtime = 2.5;
+    float reloadtime = 1;
     float reloadtimer;
 
     for (int i = 0; i < maxGhosts; i++)
     {
         ghosts[i] = {GetRandomValue(0, screenWidth), GetRandomValue(0, screenHeight), 60, 120};
-        ghostSpeedsX[i] = (GetRandomValue(0, 1));
-        ghostSpeedsY[i] = (GetRandomValue(0, 1));
+        ghostSpeedsX[i] = 0;
+        ghostSpeedsY[i] = 0;
     } //for (int i = 0; i < maxGhosts; i++)
 
     Rectangle crosshair = {0, 0, 30, 30};
@@ -65,27 +70,17 @@ int main()
 
     SetTargetFPS(60);
 
-    bool ghostAppeared[maxGhosts] = {false};
-
     while (!WindowShouldClose())
     {
         if (!gameOver)
         {
-            if (bullet < maxbullet)
-            {
-                reloadtimer += GetFrameTime();
-                if (reloadtimer >= reloadtime)
-                {
-                    bullet++;
-                    reloadtimer = 0;
-                }
-            }
-
             runningTime += GetFrameTime();
             if (runningTime >= updateTime)
             {
                 ghostAppearsFrame++;
                 ghostIdleFrame++;
+                ghostVanishFrame++;
+
                 runningTime = 0;
 
                 if (ghostAppearsFrame >= 6)
@@ -96,6 +91,11 @@ int main()
                 if (ghostIdleFrame >= 7)
                 {
                     ghostIdleFrame = 0;
+                }
+
+                if (ghostVanishFrame >= 7)
+                {
+                    ghostVanishFrame = 0;
                 }
             }
 
@@ -130,12 +130,13 @@ int main()
                     {
                         ghostSpawnTimers = 0.0f;
                         ghostActive[i] = true;
+                        ghostAppeared[i] = false;
+                        ghostVanished[i] = false;
                         activeGhosts++;
                         ghosts[i].x = GetRandomValue(0, screenWidth);
                         ghosts[i].y = GetRandomValue(0, screenHeight);
                     }
                 }
-
             } //for (int i = 0; i <= activeGhosts; i++)
 
             // ghost movement
@@ -144,7 +145,7 @@ int main()
                 if (ghostActive[i])
                 {
                     ghostChangeDirTimers += GetFrameTime();
-                    if (ghostChangeDirTimers >= ghostChangeDirTime)
+                    if (ghostChangeDirTimers >= ghostChangeDirTime && ghostAppeared[i])
                     {
                         ghostChangeDirTimers = 0.0f;
                         ghostSpeedsX[i] = GetRandomValue(-1, 1);
@@ -163,9 +164,18 @@ int main()
                         ghosts[i].y = 0;
                     if (ghosts[i].y + ghostIdleHeight*2 > screenHeight)
                         ghosts[i].y = screenHeight - ghostIdleHeight*2;   
-                } //if (ghostActive[i])
-                
+                } //if (ghostActive[i])                
             } //for (int i = 0; i <= activeGhosts; i++)
+
+            if (bullet < maxbullet)
+            {
+                reloadtimer += GetFrameTime();
+                if (reloadtimer >= reloadtime)
+                {
+                    bullet++;
+                    reloadtimer = 0;
+                }
+            }
 
             // Shooting ghosts when spacebar is pressed
             if (IsKeyPressed(KEY_SPACE)) 
@@ -178,9 +188,14 @@ int main()
                         // Check collision between crosshair and ghost
                         if (ghostActive[i] && CheckCollisionRecs(crosshair, ghosts[i])) 
                         {
-                            ghostActive[i] = false; // Ghost disappears
                             activeGhosts--;
                             score += 1; // Increase score
+
+                            ghostVanished[i] = true;
+
+                            ghostActive[i] = false; // Ghost disappears        
+                            ghostSpeedsX[i] = 0;
+                            ghostSpeedsY[i] = 0;   
                         }
                     }
                 }
@@ -222,6 +237,8 @@ int main()
             // Reset game variables here
             ghostAppearsFrame = 0;
             ghostIdleFrame = 0;
+            ghostVanishFrame = 0;
+
             runningTime = 0;
             activeGhosts = 0;
             score = 0;
@@ -232,16 +249,18 @@ int main()
             for (int i = 0; i < maxGhosts; i++)
             {
                 ghostAppeared[i] = false;
+                ghostVanished[i] = false;
+
                 ghostActive[i] = false;
                 ghostSpawnTimers = 0.0f;
-                ghostSpeedsX[i] = (GetRandomValue(0, 1) == 0 ? 1 : -1);
-                ghostSpeedsY[i] = (GetRandomValue(0, 1) == 0 ? 1 : -1);
+                ghostSpeedsX[i] = 0;
+                ghostSpeedsY[i] = 0;
             }
 
             player.x = (screenWidth - 60) / 2;
             player.y = (screenHeight - 120) / 2;
             gameOver = false;
-        }
+        } //if (IsKeyPressed(KEY_ENTER))
 
         // Draw all active ghosts
         for (int i = 0; i < maxGhosts; i++)
@@ -250,7 +269,7 @@ int main()
             {
                 float faceRight = -1.f;
                 if (ghostSpeedsX[i] > 0)
-            {   
+                {   
                     faceRight = -1.f;
                 }
                 else
@@ -266,6 +285,7 @@ int main()
                     if (ghostAppearsFrame >= 5)
                     {
                         ghostAppeared[i] = true;
+                        ghostAppearsFrame = 0;
                     }
                 }
                 else
@@ -274,9 +294,33 @@ int main()
                     DrawTexturePro(ghostIdle, source, {ghosts[i].x - ghostIdleWidth + 4, ghosts[i].y - ghostIdleHeight + 20, ghostIdleWidth * scale, ghostIdleHeight * scale}, {0.f, 0.f}, 0.f, WHITE);
                 }
 
-                DrawRectangleLines(ghosts[i].x, ghosts[i].y, ghosts[i].width, ghosts[i].height, GREEN);
+                // สำหรับทดสอบพื้นที่ยิง DrawRectangleLines(ghosts[i].x, ghosts[i].y, ghosts[i].width, ghosts[i].height, GREEN);
+            } //if (ghostActive[i])
+            else
+            {
+                float faceRight = -1.f;
+                if (ghostSpeedsX[i] > 0)
+                {   
+                    faceRight = -1.f;
+                }
+                else
+                {
+                    faceRight = 1.f;
+                }   
+
+                if (ghostVanished[i])
+                {
+                    Rectangle source{ghostVanishFrame * ghostVanishWidth, 0.f, faceRight * ghostVanishWidth, ghostVanishHeight};
+                    DrawTexturePro(ghostVanish, source, {ghosts[i].x - ghostVanishWidth + 4, ghosts[i].y - ghostVanishHeight + 20, ghostVanishWidth * scale, ghostVanishHeight * scale}, {0.f, 0.f}, 0.f, WHITE);
+
+                    if (ghostVanishFrame >= 6)
+                    {
+                        ghostVanished[i] = false;
+                        ghostVanishFrame = 0;
+                    }
+                }
             }
-        }
+        } //for (int i = 0; i < maxGhosts; i++)
         
         DrawText(TextFormat("Score: %d", score), 10, 10, 20, GREEN);
         DrawText(TextFormat("Ghost: %d/%d", activeGhosts ,maxGhosts), 10, 40, 20, PURPLE);
