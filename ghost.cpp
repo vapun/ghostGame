@@ -1,10 +1,13 @@
 #include <raylib.h> // C++ and Raylib
 
+float ghostAppearsRunningTime{};
+float ghostIdleRunningTime{};
+float ghostVanishRunningTime{};
+
 int ghostAppearsFrame{};
 int ghostIdleFrame{};
 int ghostVanishFrame{};
 const float updateTime{1.f / 12.f};
-float runningTime{};
 float scale{2.8}; // Scale background & ghost
 float timetest;
 
@@ -51,7 +54,7 @@ int main()
     // Bullet
     int maxbullet = 10;
     int bullet = maxbullet;
-    float reloadtime = 1;
+    float reloadtime = 3;
     float reloadtimer;
 
     for (int i = 0; i < maxGhosts; i++)
@@ -74,31 +77,6 @@ int main()
     {
         if (!gameOver)
         {
-            runningTime += GetFrameTime();
-            if (runningTime >= updateTime)
-            {
-                ghostAppearsFrame++;
-                ghostIdleFrame++;
-                ghostVanishFrame++;
-
-                runningTime = 0;
-
-                if (ghostAppearsFrame >= 6)
-                {
-                    ghostAppearsFrame = 0;
-                }
-
-                if (ghostIdleFrame >= 7)
-                {
-                    ghostIdleFrame = 0;
-                }
-
-                if (ghostVanishFrame >= 7)
-                {
-                    ghostVanishFrame = 0;
-                }
-            }
-
             // Control rosshair
             if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
                 player.x += 10;
@@ -119,6 +97,13 @@ int main()
             if (player.y + player.height > screenHeight)
                 player.y = screenHeight - player.height;
 
+            // Handle input for spawning ghosts
+            if (IsKeyPressed(KEY_H)) 
+            {
+                ghostSpawnTimers = ghostSpawnTime;
+
+            }
+            
             // ghost spawning
             for (int i = 0; i <= activeGhosts; i++)
             {
@@ -131,7 +116,7 @@ int main()
                         ghostSpawnTimers = 0.0f;
                         ghostActive[i] = true;
                         ghostAppeared[i] = false;
-                        ghostVanished[i] = false;
+                        //ghostVanished[i] = false;
                         activeGhosts++;
                         ghosts[i].x = GetRandomValue(0, screenWidth);
                         ghosts[i].y = GetRandomValue(0, screenHeight);
@@ -167,6 +152,7 @@ int main()
                 } //if (ghostActive[i])                
             } //for (int i = 0; i <= activeGhosts; i++)
 
+            // Reloading
             if (bullet < maxbullet)
             {
                 reloadtimer += GetFrameTime();
@@ -190,9 +176,7 @@ int main()
                         {
                             activeGhosts--;
                             score += 1; // Increase score
-
                             ghostVanished[i] = true;
-
                             ghostActive[i] = false; // Ghost disappears        
                             ghostSpeedsX[i] = 0;
                             ghostSpeedsY[i] = 0;   
@@ -201,27 +185,18 @@ int main()
                 }
             } //if (IsKeyPressed(KEY_SPACE)) 
 
-            // Handle input for spawning ghosts
-            if (IsKeyPressed(KEY_H)) 
+            ghostIdleRunningTime += GetFrameTime();
+            if (ghostIdleRunningTime >= updateTime)
             {
-                for (int i = 0; i <= activeGhosts; i++) 
-                {
-                    if (!ghostActive[i]) 
-                    {
-                        ghostActive[i] = true;
-                        activeGhosts++;
-                        ghosts[i].x = GetRandomValue(0, screenWidth);
-                        ghosts[i].y = GetRandomValue(0, screenHeight);
-                        break; // Spawned one ghost, exit the loop
-                    }
-                }
-            }
-        } //if (!gameOver)
+                ghostIdleFrame++;
+                ghostIdleRunningTime = 0;
 
-        if (activeGhosts >= maxGhosts)
-        {
-            gameOver = true;
-        }
+                if (ghostIdleFrame >= 7)
+                {
+                    ghostIdleFrame = 0;
+                }
+            } //if (ghostIdleRunningTime >= updateTime)
+        } //if (!gameOver)
 
         crosshair.x = player.x + player.width / 2 - crosshair.width / 2;
         crosshair.y = player.y + player.height / 2 - crosshair.height / 2;
@@ -230,37 +205,6 @@ int main()
         ClearBackground(BLACK);
         DrawTextureEx(background, {0, 0}, 0.f, scale, WHITE);
         DrawRectangleRec(player, BLANK);
-
-        // Restart the game if Enter key is pressed
-        if (IsKeyPressed(KEY_ENTER))
-        {
-            // Reset game variables here
-            ghostAppearsFrame = 0;
-            ghostIdleFrame = 0;
-            ghostVanishFrame = 0;
-
-            runningTime = 0;
-            activeGhosts = 0;
-            score = 0;
-            timetest = 0;
-            bullet = maxbullet;
-            reloadtimer = 0;
-
-            for (int i = 0; i < maxGhosts; i++)
-            {
-                ghostAppeared[i] = false;
-                ghostVanished[i] = false;
-
-                ghostActive[i] = false;
-                ghostSpawnTimers = 0.0f;
-                ghostSpeedsX[i] = 0;
-                ghostSpeedsY[i] = 0;
-            }
-
-            player.x = (screenWidth - 60) / 2;
-            player.y = (screenHeight - 120) / 2;
-            gameOver = false;
-        } //if (IsKeyPressed(KEY_ENTER))
 
         // Draw all active ghosts
         for (int i = 0; i < maxGhosts; i++)
@@ -281,6 +225,13 @@ int main()
                 {
                     Rectangle source{ghostAppearsFrame * ghostAppearsWidth, 0.f, faceRight * ghostAppearsWidth, ghostAppearsHeight};
                     DrawTexturePro(ghostAppears, source, {ghosts[i].x - ghostAppearsWidth + 4, ghosts[i].y - ghostAppearsHeight + 20, ghostAppearsWidth * scale, ghostAppearsHeight * scale}, {0.f, 0.f}, 0.f, WHITE);
+
+                    ghostAppearsRunningTime += GetFrameTime();
+                    if (ghostAppearsRunningTime >= updateTime)
+                    {
+                        ghostAppearsFrame++;
+                        ghostAppearsRunningTime = 0;
+                    } //if (ghostAppearsRunningTime >= updateTime)
 
                     if (ghostAppearsFrame >= 5)
                     {
@@ -313,7 +264,14 @@ int main()
                     Rectangle source{ghostVanishFrame * ghostVanishWidth, 0.f, faceRight * ghostVanishWidth, ghostVanishHeight};
                     DrawTexturePro(ghostVanish, source, {ghosts[i].x - ghostVanishWidth + 4, ghosts[i].y - ghostVanishHeight + 20, ghostVanishWidth * scale, ghostVanishHeight * scale}, {0.f, 0.f}, 0.f, WHITE);
 
-                    if (ghostVanishFrame >= 6)
+                    ghostVanishRunningTime += GetFrameTime();
+                    if (ghostVanishRunningTime >= updateTime)
+                    {
+                        ghostVanishFrame++;
+                        ghostVanishRunningTime = 0;
+                    } //if (ghostVanishRunningTime >= updateTime)
+
+                    if (ghostVanishFrame >= 7)
                     {
                         ghostVanished[i] = false;
                         ghostVanishFrame = 0;
@@ -322,21 +280,70 @@ int main()
             }
         } //for (int i = 0; i < maxGhosts; i++)
         
+        // Draw text
         DrawText(TextFormat("Score: %d", score), 10, 10, 20, GREEN);
         DrawText(TextFormat("Ghost: %d/%d", activeGhosts ,maxGhosts), 10, 40, 20, PURPLE);
         DrawText(TextFormat("Spawning: %.1f", timetest), 10, 70, 20, PURPLE);
         DrawText(TextFormat("Bullet: %d", bullet), 10, 100, 20, YELLOW);
         DrawText(TextFormat("Reloading: %.1f", reloadtime-reloadtimer), 10, 130, 20, YELLOW);
 
+        // Draw crosshair
+        for (int i = 0; i < maxGhosts; i++) 
+        {
+            // Check collision between crosshair and ghost
+            if (ghostActive[i] && CheckCollisionRecs(crosshair, ghosts[i])) 
+            {
+                crosshairColor = RED;
+            }
+        }
         DrawRectangle(crosshair.x - 10, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
         DrawRectangle(crosshair.x + crosshair.width, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
         DrawRectangle(crosshair.x + crosshair.width / 2 - 1, crosshair.y - 10, 3, 10, crosshairColor);
         DrawRectangle(crosshair.x + crosshair.width / 2 - 1, crosshair.y + crosshair.height, 3, 10, crosshairColor);
 
+        if (activeGhosts >= maxGhosts)
+        {
+            gameOver = true;
+        }
+
         if (gameOver)
         {
             DrawText("Game Over! Press Enter to Restart.", (screenWidth / 2) - (MeasureText("Game Over! Press Enter to Restart.", 20) / 2), screenHeight / 2, 20, YELLOW);
         }
+
+        // Restart the game if Enter key is pressed
+        if (IsKeyPressed(KEY_ENTER))
+        {
+            // Reset game variables here
+            ghostAppearsFrame = 0;
+            ghostIdleFrame = 0;
+            ghostVanishFrame = 0;
+
+            ghostAppearsRunningTime = 0;
+            ghostIdleRunningTime = 0;
+            ghostVanishRunningTime = 0;
+
+            activeGhosts = 0;
+            score = 0;
+            timetest = 0;
+            bullet = maxbullet;
+            reloadtimer = 0;
+
+            for (int i = 0; i < maxGhosts; i++)
+            {
+                ghostAppeared[i] = false;
+                ghostVanished[i] = false;
+
+                ghostActive[i] = false;
+                ghostSpawnTimers = 0.0f;
+                ghostSpeedsX[i] = 0;
+                ghostSpeedsY[i] = 0;
+            }
+
+            player.x = (screenWidth - 60) / 2;
+            player.y = (screenHeight - 120) / 2;
+            gameOver = false;
+        } //if (IsKeyPressed(KEY_ENTER))
         
         EndDrawing();
     } //while (!WindowShouldClose())
