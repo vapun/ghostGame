@@ -9,7 +9,6 @@ int ghostIdleFrame{};
 int ghostVanishFrame{};
 const float updateTime{1.f / 12.f};
 float scale{2.8}; // Scale background & ghost
-float timetest;
 
 int main()
 {   
@@ -25,6 +24,10 @@ int main()
     Texture2D ghostAppears = LoadTexture("ghost-appears.png"); // Ghost spawning spike
     Texture2D ghostShriek = LoadTexture("ghost-shriek.png");
     Texture2D ghostVanish = LoadTexture("ghost-vanish.png");
+
+    // Sound
+    Sound backGround = LoadSound("spiderDance.mp3");
+    
 
     // Replace the existing initialization of the player rectangle
     Rectangle player = {(screenWidth - 60) / 2, (screenHeight - 120) / 2, 60, 120};
@@ -68,15 +71,22 @@ int main()
     Color crosshairColor = YELLOW;
 
     bool gameOver = false;
-
+    float time = 0;
+    float timetest = ghostSpawnTime;
     int score = 0;
 
     SetTargetFPS(60);
 
     while (!WindowShouldClose())
     {
+        if(!IsSoundPlaying(backGround))
+        {
+            PlaySound(backGround);  
+        }
+
         if (!gameOver)
         {
+            time += GetFrameTime();
             // Control rosshair
             if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
                 player.x += 7;
@@ -105,11 +115,11 @@ int main()
             }
             
             // ghost spawning
+            ghostSpawnTimers += GetFrameTime();
             for (int i = 0; i <= activeGhosts; i++)
             {
                 if (!ghostActive[i])
                 {
-                    ghostSpawnTimers += GetFrameTime();
                     timetest = ghostSpawnTime - ghostSpawnTimers;
                     if (ghostSpawnTimers >= ghostSpawnTime)
                     {
@@ -166,6 +176,7 @@ int main()
             // Shooting ghosts when spacebar is pressed
             if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_V) || IsKeyPressed(KEY_B) || IsKeyPressed(KEY_N) || IsKeyPressed(KEY_M)) 
             {
+
                 if (bullet > 0)
                 {
                     bullet--;
@@ -213,6 +224,8 @@ int main()
         DrawText(TextFormat("Spawning: %.1f", timetest), 10, 70, 20, PURPLE);
         DrawText(TextFormat("Bullet: %d", bullet), 10, 100, 20, YELLOW);
         DrawText(TextFormat("Reloading: %.1f", reloadtime-reloadtimer), 10, 130, 20, YELLOW);
+        DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 160, 20, WHITE);
+        DrawText(TextFormat("Time: %.1f", time), 10, 190, 20, WHITE);
 
         // Draw all active ghosts
         for (int i = 0; i < maxGhosts; i++)
@@ -317,7 +330,8 @@ int main()
 
                 activeGhosts = 0;
                 score = 0;
-                timetest = 0;
+                time= 0;
+                timetest = ghostSpawnTime;
                 bullet = maxbullet;
                 reloadtimer = 0;
 
