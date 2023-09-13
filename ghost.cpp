@@ -37,8 +37,7 @@ int main()
     int ghostSpeedsY[maxGhosts];
     float ghostSpawnTimers;
     float ghostChangeDirTimers;
-    const float ghostSpawnTimeFix = 2.0f; // Ghoat will spawn every X.XX sec
-    float ghostSpawnTime = ghostSpawnTimeFix;
+    const float ghostSpawnTime = 2.0f; // Ghoat will spawn every X.XX sec
     float ghostChangeDirTime = 1.0f; // Ghost will change movement every X.XX sec
     int activeGhosts = 0;
     bool ghostActive[maxGhosts]{};
@@ -79,7 +78,7 @@ int main()
     Rectangle crosshair = {0, 0, 30, 30};
     Color crosshairColor = YELLOW;
 
-    bool gameOver = false;
+    bool gameOver = true;
     float time = 0;
     float spawningTime = ghostSpawnTime;
     float movingTime = ghostChangeDirTime;
@@ -93,12 +92,15 @@ int main()
 
     while (!WindowShouldClose())
     {
-        if(!IsSoundPlaying(backGround))
-            PlaySound(backGround);
-
         if (!gameOver)
         {
+            // BG music
+            if(!IsSoundPlaying(backGround))
+                PlaySound(backGround);
+
+            // Time
             time += GetFrameTime();
+
             // Control rosshair
             if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
                 player.x += 7;
@@ -159,7 +161,6 @@ int main()
             // Shooting ghosts when spacebar is pressed
             if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_V) || IsKeyPressed(KEY_B) || IsKeyPressed(KEY_N) || IsKeyPressed(KEY_M)) 
             {
-
                 if (bullet > 0)
                 {
                     bullet--;
@@ -184,18 +185,28 @@ int main()
         } //if (!gameOver)
 
         // ghost movement
+        // ghostChangeDirTimers += GetFrameTime();
+        // movingTime = ghostChangeDirTime - ghostChangeDirTimers;
+        // if ((ghostChangeDirTimers >= (ghostChangeDirTime)))
+        // {
+        //     ghostChangeDirTimers = 0.0f;
+        //     for (int i = 0; i <= maxGhosts; i++)
+        //     {
+        //         ghostSpeedsX[i] = (GetRandomValue(-1, 1));
+        //         if (ghostSpeedsX[i] == 0)
+        //         {
+        //             ghostSpeedsY[i] = (GetRandomValue(0, 1) == 0 ? 1 : -1);
+        //         }
+        //         else
+        //         {
+        //             ghostSpeedsY[i] = (GetRandomValue(-1, 1));
+        //         }
+        //     }
+        // }
         for (int i = 0; i <= maxGhosts; i++)
         {
             if (ghostActive[i] && !ghostVanished[i])
             {
-                // movingTime = ghostChangeDirTime - ghostChangeDirTimers;
-                // ghostChangeDirTimers += GetFrameTime();
-                // if ((ghostChangeDirTimers >= (ghostChangeDirTime)) && (!ghostAppeared[i]))
-                // {
-                //     ghostChangeDirTimers = 0.0f;
-                //     ghostSpeedsX[i] = GetRandomValue(-1, 1);
-                //     ghostSpeedsY[i] = GetRandomValue(-1, 1);
-                // }
                 if (!ghostAppeared[i])
                 {
                     ghosts[i].x += ghostSpeedsX[i] * scale;
@@ -238,12 +249,13 @@ int main()
         DrawText(TextFormat("Score: %d", score), 10, 10, 20, GREEN);
         DrawText(TextFormat("Ghost: %d/%d", activeGhosts ,maxGhosts), 10, 40, 20, PURPLE);
         DrawText(TextFormat("Spawning: %.1f", spawningTime), 10, 70, 20, PURPLE);
-        DrawText(TextFormat("Bullet: %d", bullet), 10, 100, 20, YELLOW);
+        DrawText(TextFormat("Bullet: %d/%d", bullet, maxbullet), 10, 100, 20, YELLOW);
         DrawText(TextFormat("Reloading: %.1f", reloadtime-reloadtimer), 10, 130, 20, YELLOW);
         DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 160, 20, WHITE);
         DrawText(TextFormat("Time: %.1f", time), 10, 190, 20, WHITE);
         DrawText(TextFormat("Time Level: %.1f", timeLevel), 10, 220, 20, WHITE);
         DrawText(TextFormat("Level: %.0f", level), 10, 250, 20, YELLOW);
+        //DrawText(TextFormat("Moving Time: %.0f", movingTime), 10, 280, 20, YELLOW);
 
         ghostIdleRunningTime += GetFrameTime();
         if (ghostIdleRunningTime >= updateTime)
@@ -352,15 +364,16 @@ int main()
             gameOver = true;
         }
 
-        if (gameOver)
-        {
-            DrawText("Game Over! Press Enter/Spacebar to Restart.", (screenWidth / 2) - (MeasureText("Game Over! Press Enter/Spacebar to Restart.", 50) / 2), screenHeight / 2, 50, GRAY);
-        }
-
         // Restart the game if Enter key is pressed
         if (gameOver)
         {
-            if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER))
+            StopSound(backGround);
+
+            DrawText("Game Over! Press Enter to Restart.", (screenWidth / 2) - (MeasureText("Game Over! Press Enter to Restart.", 50) / 2), screenHeight / 2, 50, GRAY);
+            //DrawText("Game Over! Press Enter/Spacebar to Restart.", (screenWidth / 2) - (MeasureText("Game Over! Press Enter/Spacebar to Restart.", 50) / 2), screenHeight / 2, 50, GRAY);
+
+            if (IsKeyPressed(KEY_ENTER))
+            //if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER))
             {
                 // Reset game variables here
                 ghostIdleFrame = 0;
