@@ -1,1 +1,44 @@
 Score: 0
+Score: 0
+Score: 0
+Score: 0
+Score: 0
+Score: 0
+Score: 0
+Score: 0
+Score: 0
+Name: FSD,FS,F,SDFS,FF	Score: 1
+Name: FSD,FS,F,SDFS,FFMDD	Score: 0
+Name: ,A,D	Score: 0
+Name: ,A,D	Score: 0
+Name: DSAD,MFMFKFDSMFS C,S CLMFSFKSFKNSDFNKSDNFSDNFSDLFNDFJSNFJSNFNSDKFDF	Score: 0
+Name: MSADM;SDADASKDMASKMAKDAKDADLDLAMDLSMDKWASDAWLKSMDKWASLKWALKMSD	Score: 0
+Name: VALENTINE	Score: 64
+Name: ADSADADMS DMASDAD MAD MAD DWDAD WAAWDA	Score: 0
+Name: AWDSADASDD,;LSDAMDLSAMD.S,.S,DA,SD,	Score: 0
+Name: AWDSADASDD,;LSDAMDLSAMD.S,.S,DA,SD,	Score: 0
+Name: 	Score: 0
+Name: SDMADMAKSMDSKD	Score: 0
+Name: XZ;XDSAD,S,D,ASDSADAS,DA,DSADSDASAD	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: ASDASDSDSDADMLMD	Score: 50
+Name: 	Score: 0
+Name: 	Score: 0
+Name: ASDADLMDALLSAKDSKV .D,KMWEKNENRRLKNEWR	Score: 0
+Name: ASDADLMDALLSAKDSKV .D,KMWEKNENRRLKNEWR	Score: 0
+Name: ASDADLMDALLSAKDSKV .D,KMWEKNENRRLKNEWR	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0
+Name: 	Score: 0

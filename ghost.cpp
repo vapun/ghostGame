@@ -1,5 +1,6 @@
-#include <raylib.h> // C++ and Raylib
+#include "raylib.h" // C++ and Raylib
 #include <stdio.h>
+#include <string.h>
 
 float ghostAppearsRunningTime{};
 float ghostIdleRunningTime{};
@@ -64,14 +65,15 @@ int main()
     Color crosshairColor = YELLOW;
     bool gameOver = true;
     bool menu = true;
-    bool name = true;
+    bool enterName = true;
     bool saveScore = false;
     float time = 0;
-    int score = 0;
-    int scoreLevel = 0;
     float level = 0;
     float timeLevel = 0;
     float nextStage = 5;
+    int score = 0;
+    int scoreLevel = 0;
+    char playerName[256] = "";
 
     SetTargetFPS(60);
 
@@ -101,7 +103,7 @@ int main()
 
     while (!WindowShouldClose())
     {
-        if (!gameOver && !menu)
+        if (!gameOver && !menu &&!enterName)
         {
             // BG music
             if(!IsSoundPlaying(backGround))
@@ -162,7 +164,17 @@ int main()
                     }
                 }
             } //if (IsKeyPressed(KEY_SPACE)) 
-        } //if (!gameOver)
+
+            // Control rosshair
+            if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
+                player.x += 7;
+            if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
+                player.x -= 7;
+            if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
+                player.y += 7;
+            if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
+                player.y -= 7;
+        } //if (!gameOver && !menu &&!enterName)
 
         // Level++
         timeLevel = level*0.1;
@@ -171,16 +183,6 @@ int main()
             scoreLevel = 0;
             level++;
         }
-
-        // Control rosshair
-        if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
-            player.x += 7;
-        if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
-            player.x -= 7;
-        if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
-            player.y += 7;
-        if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
-            player.y -= 7;
 
         // Ensure player stays within window boundaries
         if (player.x < 0)
@@ -235,15 +237,15 @@ int main()
         DrawRectangleRec(player, BLANK);
 
         // Draw text
-        DrawText(TextFormat("Score: %d", score), 10, 10, 20, GREEN);
-        DrawText(TextFormat("Ghost: %d/%d", activeGhosts ,maxGhosts), 10, 40, 20, PURPLE);
-        DrawText(TextFormat("Spawning: %.1f/%.1f", ghostSpawnTimers, ghostSpawnTime - timeLevel), 10, 70, 20, PURPLE);
-        DrawText(TextFormat("Bullet: %d/%d", bullet, maxbullet), 10, 100, 20, YELLOW);
-        DrawText(TextFormat("Reloading: %.1f/%.1f", reloadtimer, reloadtime), 10, 130, 20, YELLOW);
-        DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 160, 20, WHITE);
-        DrawText(TextFormat("Time: %.1f", time), 10, 190, 20, WHITE);
-        DrawText(TextFormat("Time Level: %.1f", timeLevel), 10, 220, 20, WHITE);
-        DrawText(TextFormat("Level: %.0f", level), 10, 250, 20, YELLOW);
+        DrawText(TextFormat("Player Name: %s", playerName), 10, 10, 20, WHITE);
+        DrawText(TextFormat("Score: %d", score), 10, 40, 20, GREEN);
+        DrawText(TextFormat("Level: %.0f", level), 10, 70, 20, GREEN);
+        DrawText(TextFormat("Ghost: %d/%d", activeGhosts ,maxGhosts), 10, 100, 20, PURPLE);
+        DrawText(TextFormat("Spawning: %.1f/%.1f", ghostSpawnTimers, ghostSpawnTime - timeLevel), 10, 130, 20, PURPLE);
+        DrawText(TextFormat("Bullet: %d/%d", bullet, maxbullet), 10, 160, 20, YELLOW);
+        DrawText(TextFormat("Reloading: %.1f/%.1f", reloadtimer, reloadtime), 10, 190, 20, YELLOW);
+        DrawText(TextFormat("Time: %.1f", time), 10, 220, 20, WHITE);
+        DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 250, 20, WHITE);
 
         ghostIdleRunningTime += GetFrameTime();
         if (ghostIdleRunningTime >= updateTime)
@@ -343,10 +345,13 @@ int main()
             }
         } //for (int i = 0; i < maxGhosts; i++) 
 
-        DrawRectangle(crosshair.x - 10, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
-        DrawRectangle(crosshair.x + crosshair.width, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
-        DrawRectangle(crosshair.x + crosshair.width / 2 - 1, crosshair.y - 10, 3, 10, crosshairColor);
-        DrawRectangle(crosshair.x + crosshair.width / 2 - 1, crosshair.y + crosshair.height, 3, 10, crosshairColor);
+        if (!gameOver)
+        {
+            DrawRectangle(crosshair.x - 10, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
+            DrawRectangle(crosshair.x + crosshair.width, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
+            DrawRectangle(crosshair.x + crosshair.width / 2 - 1, crosshair.y - 10, 3, 10, crosshairColor);
+            DrawRectangle(crosshair.x + crosshair.width / 2 - 1, crosshair.y + crosshair.height, 3, 10, crosshairColor);
+        }
 
         if (activeGhosts >= maxGhosts)
         {
@@ -361,8 +366,9 @@ int main()
 
         if(!menu)
         {
-            if (IsKeyPressed(KEY_M))
+            if (IsKeyPressed(KEY_RIGHT_SHIFT))
             {
+                enterName = true;
                 gameOver = true;
                 menu = true;
             }
@@ -374,13 +380,14 @@ int main()
                 FILE *scoreBoard = fopen("ScoreBoard.txt", "a");
                 if (saveScore)
                 {
-                    //fprintf(scoreBoard, "Name: %s\tScore: %d\n", name, score);
-                    fprintf(scoreBoard, "Score: %d\n", score);
+                    fprintf(scoreBoard, "Name: %s\tScore: %d\n", playerName, score);
                     saveScore = false;
                 }
                 fclose(scoreBoard);
 
-                DrawText("Game Over! Press Enter to Restart", (screenWidth / 2) - (MeasureText("Game Over! Press Enter to Restart", 50) / 2), 100, 50, RED);
+                DrawText("Game Over!", (screenWidth / 2) - (MeasureText("Game Over!", 75) / 2), 50, 75, RED);
+                DrawText("Press Enter to Restart", (screenWidth / 2) - (MeasureText("Press Enter to Restart", 40) / 2), 150, 40, RED);
+                DrawText("Press Right Shift to Menu", (screenWidth / 2) - (MeasureText("Press Right Shift to Menu", 40) / 2), 650, 40, RED);
 
                 if (IsKeyPressed(KEY_ENTER))
                 {
@@ -434,15 +441,33 @@ int main()
                 }
             } //else         
         } //if(!menu)
-        
+
         if (menu)
         {
-            if(name)
+            if(enterName)
             {
-                DrawText("ENTER YOUR NAME", (screenWidth / 2) - (MeasureText("ENTER YOUR NAME", 40) / 2), 150, 40, PURPLE);
+                float nameWidth = MeasureText(playerName, 30)+10;
+                DrawText("MENU", (screenWidth / 2) - (MeasureText("MENU", 75) / 2), 50, 75, YELLOW);
+                DrawText("ENTER YOUR NAME", (screenWidth / 2) - (MeasureText("ENTER YOUR NAME", 40) / 2), 150, 40, YELLOW);
+                DrawRectangle((screenWidth / 2) - (nameWidth / 2), 200, nameWidth, 30, BLACK);
+                DrawText(playerName, (screenWidth / 2) - (MeasureText(playerName, 30) / 2), 200, 30, WHITE);
+                DrawText("Press Enter to Start", (screenWidth / 2) - (MeasureText("Press Enter to Start", 40) / 2), 650, 40, YELLOW);
+                if (IsKeyPressed(KEY_ENTER))
+                {
+                    enterName = false;
+                }
+                int key = GetKeyPressed();
+
+                if (key >= 32 && key <= 125)
+                {
+                    playerName[strlen(playerName)] = (char)key;
+                }
+                else if (key == KEY_BACKSPACE && strlen(playerName) > 0)
+                {
+                    playerName[strlen(playerName) - 1] = '\0';
+                }
             }
 
-            DrawText("MENU", (screenWidth / 2) - (MeasureText("MENU", 75) / 2), 50, 75, YELLOW);
             if(IsKeyPressed(KEY_ENTER))
             {
                 menu = false;
