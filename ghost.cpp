@@ -141,7 +141,7 @@ int main()
             if (bullet < maxbullet)
             {
                 reloadtimer += GetFrameTime();
-                if (reloadtimer >= reloadtime)
+                if (reloadtimer >= reloadtime - timeLevel)
                 {
                     bullet++;
                     reloadtimer = 0;
@@ -237,13 +237,13 @@ int main()
         DrawRectangleRec(player, BLANK);
 
         // Draw text
-        DrawText(TextFormat("Player Name: %s", playerName), 10, 10, 20, WHITE);
+        DrawText(TextFormat("Player Name: [%s]", playerName), 10, 10, 20, WHITE);
         DrawText(TextFormat("Score: %d", score), 10, 40, 20, GREEN);
         DrawText(TextFormat("Level: %.0f", level), 10, 70, 20, GREEN);
         DrawText(TextFormat("Ghost: %d/%d", activeGhosts ,maxGhosts), 10, 100, 20, PURPLE);
         DrawText(TextFormat("Spawning: %.1f/%.1f", ghostSpawnTimers, ghostSpawnTime - timeLevel), 10, 130, 20, PURPLE);
         DrawText(TextFormat("Bullet: %d/%d", bullet, maxbullet), 10, 160, 20, YELLOW);
-        DrawText(TextFormat("Reloading: %.1f/%.1f", reloadtimer, reloadtime), 10, 190, 20, YELLOW);
+        DrawText(TextFormat("Reloading: %.1f/%.1f", reloadtimer, reloadtime - timeLevel), 10, 190, 20, YELLOW);
         DrawText(TextFormat("Time: %.1f", time), 10, 220, 20, WHITE);
         DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 250, 20, WHITE);
 
@@ -317,7 +317,7 @@ int main()
                 if (ghostVanishFrame[i] > 6)
                 {
                     activeGhosts--;
-                    score += 1; // Increase score
+                    score += 1+level; // Increase score
                     scoreLevel += 1;
                     ghostActive[i] = false; // Ghost disappears        
                     ghostSpeedsX[i] = (GetRandomValue(-1, 1));
@@ -380,7 +380,7 @@ int main()
                 FILE *scoreBoard = fopen("ScoreBoard.txt", "a");
                 if (saveScore)
                 {
-                    fprintf(scoreBoard, "Name: %s\tScore: %d\n", playerName, score);
+                    fprintf(scoreBoard, "PLayer Name: [%s]\tScore: %d\n", playerName, score);
                     saveScore = false;
                 }
                 fclose(scoreBoard);
