@@ -1,6 +1,8 @@
-#include "raylib.h" // C++ and Raylib
+// studentID 66010483 create game by C++ and Raylib
+#include "raylib.h" // 66010483 C++ and Raylib
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 float ghostAppearsRunningTime{};
 float ghostIdleRunningTime{};
@@ -32,7 +34,7 @@ int main()
     Rectangle player = {(screenWidth - 60) / 2, (screenHeight - 120) / 2, 60, 120};
 
     // Ghost
-    const int maxGhosts = 30;
+     int maxGhosts = 30;
     Rectangle ghosts[maxGhosts];
     int ghostSpeedsX[maxGhosts];
     int ghostSpeedsY[maxGhosts];
@@ -177,7 +179,7 @@ int main()
         } //if (!gameOver && !menu &&!enterName)
 
         // Level++
-        timeLevel = level*0.1;
+        timeLevel = sqrt(level)/5;
         if(scoreLevel >= nextStage)
         {
             scoreLevel = 0;
@@ -246,6 +248,7 @@ int main()
         DrawText(TextFormat("Reloading: %.1f/%.1f", reloadtimer, reloadtime - timeLevel), 10, 190, 20, YELLOW);
         DrawText(TextFormat("Time: %.1f", time), 10, 220, 20, WHITE);
         DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 250, 20, WHITE);
+        DrawText(TextFormat("test: %.3f", timeLevel), 10, 280, 20, WHITE);
 
         ghostIdleRunningTime += GetFrameTime();
         if (ghostIdleRunningTime >= updateTime)
@@ -358,12 +361,6 @@ int main()
             gameOver = true;
         }
 
-        if(gameOver || menu)
-        {
-            // Stop soiderdance
-            StopSound(backGround);
-        }
-
         if(!menu)
         {
             if (IsKeyPressed(KEY_RIGHT_SHIFT))
@@ -374,20 +371,32 @@ int main()
             }
 
             // Restart the game if Enter key is pressed
-            if (gameOver && !menu)
+            if (gameOver)
             {
-                // Save scoreboard
-                FILE *scoreBoard = fopen("ScoreBoard.txt", "a");
+                // Save score
+                FILE *scoreHistory = fopen("scoreHistory.txt", "a");
                 if (saveScore)
                 {
-                    fprintf(scoreBoard, "PLayer Name: [%s]\tScore: %d\n", playerName, score);
+                    fprintf(scoreHistory, "Player Name: [%s]\tLevel: %.0f\tScore: %d\n", playerName, level, score);
+
+                    // FILE *scoreBoard = fopen("scoreBoard.txt", "a");
+                    // if (score >= )
+                    // {
+                        
+                    // }
+                    
+                    // fclose(scoreBoard);
+
                     saveScore = false;
                 }
-                fclose(scoreBoard);
+                fclose(scoreHistory);
 
-                DrawText("Game Over!", (screenWidth / 2) - (MeasureText("Game Over!", 75) / 2), 50, 75, RED);
-                DrawText("Press Enter to Restart", (screenWidth / 2) - (MeasureText("Press Enter to Restart", 40) / 2), 150, 40, RED);
-                DrawText("Press Right Shift to Menu", (screenWidth / 2) - (MeasureText("Press Right Shift to Menu", 40) / 2), 650, 40, RED);
+                if (!menu)
+                {
+                    DrawText("Game Over!", (screenWidth / 2) - (MeasureText("Game Over!", 75) / 2), 50, 75, RED);
+                    DrawText("Press Enter to Restart", (screenWidth / 2) - (MeasureText("Press Enter to Restart", 40) / 2), 150, 40, RED);
+                    DrawText("Press Right Shift to Menu", (screenWidth / 2) - (MeasureText("Press Right Shift to Menu", 40) / 2), 650, 40, RED);
+                }
 
                 if (IsKeyPressed(KEY_ENTER))
                 {
@@ -442,23 +451,30 @@ int main()
             } //else         
         } //if(!menu)
 
+        if (menu || gameOver)
+        {
+            float nameWidth = MeasureText(playerName, 30)+10;
+            DrawRectangle((screenWidth / 2) - (nameWidth / 2), 200, nameWidth, 30, BLACK);
+            DrawText(playerName, (screenWidth / 2) - (MeasureText(playerName, 30) / 2), 200, 30, WHITE);
+            // Stop soiderdance
+            StopSound(backGround);
+        }
+
         if (menu)
         {
             if(enterName)
             {
-                float nameWidth = MeasureText(playerName, 30)+10;
                 DrawText("MENU", (screenWidth / 2) - (MeasureText("MENU", 75) / 2), 50, 75, YELLOW);
                 DrawText("ENTER YOUR NAME", (screenWidth / 2) - (MeasureText("ENTER YOUR NAME", 40) / 2), 150, 40, YELLOW);
-                DrawRectangle((screenWidth / 2) - (nameWidth / 2), 200, nameWidth, 30, BLACK);
-                DrawText(playerName, (screenWidth / 2) - (MeasureText(playerName, 30) / 2), 200, 30, WHITE);
                 DrawText("Press Enter to Start", (screenWidth / 2) - (MeasureText("Press Enter to Start", 40) / 2), 650, 40, YELLOW);
                 if (IsKeyPressed(KEY_ENTER))
                 {
                     enterName = false;
                 }
+
                 int key = GetKeyPressed();
 
-                if (key >= 32 && key <= 125)
+                if (key >= 32 && key <= 125 && key != KEY_SPACE)
                 {
                     playerName[strlen(playerName)] = (char)key;
                 }

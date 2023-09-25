@@ -1,55 +1,10 @@
-Score: 0
-Score: 0
-Score: 0
-Score: 0
-Score: 0
-Score: 0
-Score: 0
-Score: 0
-Score: 0
-Name: FSD,FS,F,SDFS,FF	Score: 1
-Name: FSD,FS,F,SDFS,FFMDD	Score: 0
-Name: ,A,D	Score: 0
-Name: ,A,D	Score: 0
-Name: DSAD,MFMFKFDSMFS C,S CLMFSFKSFKNSDFNKSDNFSDNFSDLFNDFJSNFJSNFNSDKFDF	Score: 0
-Name: MSADM;SDADASKDMASKMAKDAKDADLDLAMDLSMDKWASDAWLKSMDKWASLKWALKMSD	Score: 0
-Name: VALENTINE	Score: 64
-Name: ADSADADMS DMASDAD MAD MAD DWDAD WAAWDA	Score: 0
-Name: AWDSADASDD,;LSDAMDLSAMD.S,.S,DA,SD,	Score: 0
-Name: AWDSADASDD,;LSDAMDLSAMD.S,.S,DA,SD,	Score: 0
-Name: 	Score: 0
-Name: SDMADMAKSMDSKD	Score: 0
-Name: XZ;XDSAD,S,D,ASDSADAS,DA,DSADSDASAD	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: ASDASDSDSDADMLMD	Score: 50
-Name: 	Score: 0
-Name: 	Score: 0
-Name: ASDADLMDALLSAKDSKV .D,KMWEKNENRRLKNEWR	Score: 0
-Name: ASDADLMDALLSAKDSKV .D,KMWEKNENRRLKNEWR	Score: 0
-Name: ASDADLMDALLSAKDSKV .D,KMWEKNENRRLKNEWR	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: 	Score: 0
-Name: ASD	Score: 455
-Name: ASADA	Score: 511
-Name: 	Score: 680
-Name: 	Score: 0
-Name: 	Score: 5
-Name: [FJFNFSKF]	Score: 13
-PLayer Name: [SDA;DMAD]	Score: 0
-PLayer Name: [SSDLSMDKSL]	Score: 697
-PLayer Name: [SSDLSMDKSL]	Score: 0
-PLayer Name: [SSDLSMDKSL]	Score: 0
-PLayer Name: [VALENTINE]	Score: 680
+1   0   a
+2   1   b
+3   2   c 
+4   3   d 
+5   4   e 
+6   5   f 
+7   6   g 
+8   7   h 
+9   8   i 
+10  9   j  
