@@ -19,16 +19,11 @@ const float updateTime{1.f / 12.f};
 float scale{2.8}; // Scale background & ghost
 
 void EndgameUI();
-// Texture2D wood{};
-// Texture2D scoreboard{};
 const int screenWidth = 1950;
 const int screenHeight = 1100;
 
 int main()
 {   
-    // scoreboard = LoadTexture("scoreboard.png");
-    // wood = LoadTexture("woodBackgroundUI.png");
-
     // Window
     const int screenWidth = 661 * scale;
     const int screenHeight = 300 * scale;
@@ -389,20 +384,10 @@ int main()
             if (gameOver)
             {
                 // Save score
-                // void EndgameUI();
-                FILE *scoreHistory = fopen("scoreHistory.txt", "a");
+                FILE *scoreHistory = fopen("scores.txt", "a");
                 if (saveScore)
                 {
-                    fprintf(scoreHistory, "Player Name: [%s]\tLevel: %.0f\tScore: %d\n", playerName, level, score);
-
-                //     FILE *scoreBoard = fopen("scoreBoard.txt", "a");
-                //     if (score >= )
-                //     {
-                        
-                //     }
-                    
-                //     fclose(scoreBoard);
-
+                    fprintf(scoreHistory, "[%s]\t%d\n", playerName, score);
                     saveScore = false;
                 }
                 fclose(scoreHistory);
@@ -411,7 +396,7 @@ int main()
                 {
                     DrawText("Game Over!", (screenWidth / 2) - (MeasureText("Game Over!", 75) / 2), 50, 75, RED);
                     DrawText("Press Enter to Restart", (screenWidth / 2) - (MeasureText("Press Enter to Restart", 40) / 2), 150, 40, RED);
-                    DrawText("Press Right Shift to Menu", (screenWidth / 2) - (MeasureText("Press Right Shift to Menu", 40) / 2), 650, 40, RED);
+                    DrawText("Press Right Shift to Menu", (screenWidth / 2) - (MeasureText("Press Right Shift to Menu", 40) / 2), 700, 40, RED);
                 }
 
                 if (IsKeyPressed(KEY_ENTER))
@@ -484,7 +469,7 @@ int main()
             {
                 DrawText("MENU", (screenWidth / 2) - (MeasureText("MENU", 75) / 2), 50, 75, YELLOW);
                 DrawText("ENTER YOUR NAME", (screenWidth / 2) - (MeasureText("ENTER YOUR NAME", 40) / 2), 150, 40, YELLOW);
-                DrawText("Press Enter to Start", (screenWidth / 2) - (MeasureText("Press Enter to Start", 40) / 2), 650, 40, YELLOW);
+                DrawText("Press Enter to Start", (screenWidth / 2) - (MeasureText("Press Enter to Start", 40) / 2), 700, 40, YELLOW);
                 if (IsKeyPressed(KEY_ENTER))
                 {
                     enterName = false;
@@ -557,7 +542,7 @@ int main()
 
 void EndgameUI()
 {
-    int yOffset = 300;
+    int yOffset = 240;
     // int yOffset = screenHeight / 4 + 100;
 
     struct ScoreData
@@ -588,14 +573,15 @@ void EndgameUI()
                   { return a.score > b.score; });
 
         // Display the top 8 scores in the scoreboard
-        int scoresToDisplay = std::min(static_cast<int>(fileScores.size()), 8); // Display up to 8 scores
-        DrawText("Name", screenWidth / 5 + 100, 250, 40, WHITE);
-        DrawText("Score", screenWidth * 3 / 5 + 100, 250, 40, WHITE);
+        int scoresToDisplay = std::min(static_cast<int>(fileScores.size()), 10); // Display up to 10 scores
+        DrawText("Name", screenWidth / 5 + 100, yOffset, 30, WHITE);
+        DrawText("Score", screenWidth * 3 / 5 + 100, yOffset, 30, WHITE);
+        yOffset += 40;
         for (int i = 0; i < scoresToDisplay; ++i)
         {
-            DrawText(fileScores[i].name, screenWidth / 5 + 100, yOffset, 40, RED);
-            DrawText(std::to_string(fileScores[i].score).c_str(), screenWidth * 3 / 5 + 100, yOffset, 40, YELLOW);
-            yOffset += 50;
+            DrawText(fileScores[i].name, screenWidth / 5 + 100, yOffset , 30, PURPLE);
+            DrawText(std::to_string(fileScores[i].score).c_str(), screenWidth * 3 / 5 + 100, yOffset, 30, GREEN);
+            yOffset += 40;
         }
 
         // Free the memory allocated for name
@@ -604,5 +590,4 @@ void EndgameUI()
             free(scoreData.name);
         }
     }
-    DrawText("press spacebar to try again", screenWidth / 2 - 325, screenHeight * 4 / 5, 50, WHITE);
 }
