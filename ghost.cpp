@@ -2,7 +2,13 @@
 #include "raylib.h" // 66010483 C++ and Raylib
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <math.h>
+//#include <cstdio>
+//#include <cstdlib>
+//#include <cstring>
+#include <algorithm>
+#include <vector>
 
 float ghostAppearsRunningTime{};
 float ghostIdleRunningTime{};
@@ -12,8 +18,17 @@ int ghostIdleFrame{};
 const float updateTime{1.f / 12.f};
 float scale{2.8}; // Scale background & ghost
 
+void EndgameUI();
+// Texture2D wood{};
+// Texture2D scoreboard{};
+const int screenWidth = 1950;
+const int screenHeight = 1100;
+
 int main()
 {   
+    // scoreboard = LoadTexture("scoreboard.png");
+    // wood = LoadTexture("woodBackgroundUI.png");
+
     // Window
     const int screenWidth = 661 * scale;
     const int screenHeight = 300 * scale;
@@ -374,18 +389,19 @@ int main()
             if (gameOver)
             {
                 // Save score
+                // void EndgameUI();
                 FILE *scoreHistory = fopen("scoreHistory.txt", "a");
                 if (saveScore)
                 {
                     fprintf(scoreHistory, "Player Name: [%s]\tLevel: %.0f\tScore: %d\n", playerName, level, score);
 
-                    // FILE *scoreBoard = fopen("scoreBoard.txt", "a");
-                    // if (score >= )
-                    // {
+                //     FILE *scoreBoard = fopen("scoreBoard.txt", "a");
+                //     if (score >= )
+                //     {
                         
-                    // }
+                //     }
                     
-                    // fclose(scoreBoard);
+                //     fclose(scoreBoard);
 
                     saveScore = false;
                 }
@@ -453,6 +469,8 @@ int main()
 
         if (menu || gameOver)
         {
+            EndgameUI();
+
             float nameWidth = MeasureText(playerName, 30)+10;
             DrawRectangle((screenWidth / 2) - (nameWidth / 2), 200, nameWidth, 30, BLACK);
             DrawText(playerName, (screenWidth / 2) - (MeasureText(playerName, 30) / 2), 200, 30, WHITE);
@@ -536,3 +554,55 @@ int main()
     CloseWindow();
     return 0;
 } //int main()
+
+void EndgameUI()
+{
+    int yOffset = 300;
+    // int yOffset = screenHeight / 4 + 100;
+
+    struct ScoreData
+    {
+        char *name;
+        int score;
+    };
+
+    std::vector<ScoreData> fileScores;
+
+    FILE *scoreFile = fopen("scores.txt", "rb");
+    if (scoreFile != NULL)
+    {
+        char line[256];
+        while (fgets(line, sizeof(line), scoreFile))
+        {
+            char name[100];
+            int score;
+            if (sscanf(line, "%s %d", name, &score) == 2)
+            {
+                fileScores.push_back({strdup(name), score});
+            }
+        }
+        fclose(scoreFile);
+
+        // Sort the scores in descending order
+        std::sort(fileScores.begin(), fileScores.end(), [](const ScoreData &a, const ScoreData &b)
+                  { return a.score > b.score; });
+
+        // Display the top 8 scores in the scoreboard
+        int scoresToDisplay = std::min(static_cast<int>(fileScores.size()), 8); // Display up to 8 scores
+        DrawText("Name", screenWidth / 5 + 100, 250, 40, WHITE);
+        DrawText("Score", screenWidth * 3 / 5 + 100, 250, 40, WHITE);
+        for (int i = 0; i < scoresToDisplay; ++i)
+        {
+            DrawText(fileScores[i].name, screenWidth / 5 + 100, yOffset, 40, RED);
+            DrawText(std::to_string(fileScores[i].score).c_str(), screenWidth * 3 / 5 + 100, yOffset, 40, YELLOW);
+            yOffset += 50;
+        }
+
+        // Free the memory allocated for name
+        for (auto &scoreData : fileScores)
+        {
+            free(scoreData.name);
+        }
+    }
+    DrawText("press spacebar to try again", screenWidth / 2 - 325, screenHeight * 4 / 5, 50, WHITE);
+}
