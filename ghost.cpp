@@ -4,9 +4,6 @@
 #include <string.h>
 #include <string>
 #include <math.h>
-//#include <cstdio>
-//#include <cstdlib>
-//#include <cstring>
 #include <algorithm>
 #include <vector>
 
@@ -18,27 +15,37 @@ int ghostIdleFrame{};
 const float updateTime{1.f / 12.f};
 float scale{2.8}; // Scale background & ghost
 
+// Scoreboardfuntion
 void EndgameUI();
-const int screenWidth = 1950;
-const int screenHeight = 1100;
+
+// Window
+const int screenWidth = 661 * scale;
+const int screenHeight = 300 * scale;
 
 int main()
 {   
-    // Window
-    const int screenWidth = 661 * scale;
-    const int screenHeight = 300 * scale;
     InitWindow(screenWidth, screenHeight, "Ghost Hunt"); // Game name
 
     // Graphics
-    Texture2D background = LoadTexture("old-dark-castle-interior-background.png");
-    Texture2D ghostIdle = LoadTexture("ghost-idle.png");
-    Texture2D ghostAppears = LoadTexture("ghost-appears.png"); // Ghost spawning spike
-    Texture2D ghostShriek = LoadTexture("ghost-shriek.png");
-    Texture2D ghostVanish = LoadTexture("ghost-vanish.png");
+    Texture2D background = LoadTexture("graphic and animation/old-dark-castle-interior-background.png");
+    Texture2D ghostIdle = LoadTexture("graphic and animation/ghost-idle.png");
+    Texture2D ghostAppears = LoadTexture("graphic and animation/ghost-appears.png"); // Ghost spawning spike
+    Texture2D ghostShriek = LoadTexture("graphic and animation/ghost-shriek.png");
+    Texture2D ghostVanish = LoadTexture("graphic and animation/ghost-vanish.png");
 
     // Sound
     InitAudioDevice();
-    Sound backGround{LoadSound("spiderDanceOrigin.mp3")};
+    Sound backGroundSound{LoadSound("sfx/spiderDanceOrigin.mp3")};
+    SetSoundVolume(backGroundSound, 0.5);
+    Sound shootingSound{LoadSound("sfx/shoot02wav-14562.mp3")};
+    Sound reloadSound{LoadSound("sfx/load-gun-sound-effect-5-11003.mp3")};
+    Sound hitSound{LoadSound("sfx/steam_burst-6822.mp3")};
+    SetSoundVolume(hitSound, 2.0);
+    Sound startGameSound{LoadSound("sfx/game-start-6104.mp3")};
+    Sound spawningSound{LoadSound("sfx/mixkit-aggressive-beast-roar-13.wav")};
+    Sound gameOverSound{LoadSound("sfx/kl-peach-game-over-iii-142453.mp3")};
+    Sound menuSound{LoadSound("sfx/many-ringtones-com-3893792.mp3")};
+    Sound noBulletSound{LoadSound("sfx/empty-gun-shot-6209.mp3")};
     
     // Replace the existing initialization of the player rectangle
     Rectangle player = {(screenWidth - 60) / 2, (screenHeight - 120) / 2, 60, 120};
@@ -118,8 +125,8 @@ int main()
         if (!gameOver && !menu &&!enterName)
         {
             // BG music
-            if(!IsSoundPlaying(backGround))
-                PlaySound(backGround);
+            if(!IsSoundPlaying(backGroundSound) && !IsSoundPlaying(startGameSound))
+                PlaySound(backGroundSound);
 
             // Time
             time += GetFrameTime();
@@ -142,6 +149,7 @@ int main()
                         ghostSpawnTimers = 0.0f;
                         ghostActive[i] = true;
                         ghostAppeared[i] = true;
+                        PlaySound(spawningSound);
                         activeGhosts++;
                         ghosts[i].x = GetRandomValue(0, screenWidth);
                         ghosts[i].y = GetRandomValue(0, screenHeight);
@@ -156,6 +164,7 @@ int main()
                 if (reloadtimer >= reloadtime - timeLevel)
                 {
                     bullet++;
+                    PlaySound(reloadSound);
                     reloadtimer = 0;
                 }
             }
@@ -166,14 +175,20 @@ int main()
                 if (bullet > 0)
                 {
                     bullet--;
+                    PlaySound(shootingSound);
                     for (int i = 0; i < maxGhosts; i++) 
                     {
                         // Check collision between crosshair and ghost
                         if (ghostActive[i] && CheckCollisionRecs(crosshair, ghosts[i])) 
                         {
                             ghostVanished[i] = true;
+                            PlaySound(hitSound);
                         }
                     }
+                }
+                else
+                {
+                    PlaySound(noBulletSound);
                 }
             } //if (IsKeyPressed(KEY_SPACE)) 
 
@@ -258,7 +273,7 @@ int main()
         DrawText(TextFormat("Reloading: %.1f/%.1f", reloadtimer, reloadtime - timeLevel), 10, 190, 20, YELLOW);
         DrawText(TextFormat("Time: %.1f", time), 10, 220, 20, WHITE);
         DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 250, 20, WHITE);
-        DrawText(TextFormat("test: %.3f", timeLevel), 10, 280, 20, WHITE);
+        //DrawText(TextFormat("test: %.3f", timeLevel), 10, 280, 20, WHITE);
 
         ghostIdleRunningTime += GetFrameTime();
         if (ghostIdleRunningTime >= updateTime)
@@ -312,7 +327,7 @@ int main()
                 }
 
                 //hit blocks
-                DrawRectangleLines(ghosts[i].x, ghosts[i].y, ghosts[i].width, ghosts[i].height, GREEN);
+                //DrawRectangleLines(ghosts[i].x, ghosts[i].y, ghosts[i].width, ghosts[i].height, GREEN);
             } //if (ghostActive[i])        
 
             if (ghostVanished[i])
@@ -373,35 +388,31 @@ int main()
 
         if(!menu)
         {
-            if (IsKeyPressed(KEY_RIGHT_SHIFT))
-            {
-                enterName = true;
-                gameOver = true;
-                menu = true;
-            }
-
             // Restart the game if Enter key is pressed
             if (gameOver)
             {
+                DrawText("Game Over!", (screenWidth / 2) - (MeasureText("Game Over!", 75) / 2), 50, 75, RED);
+                DrawText("Press Enter to Restart", (screenWidth / 2) - (MeasureText("Press Enter to Restart", 40) / 2), 150, 40, RED);
+                DrawText("Press Right Shift to Menu", (screenWidth / 2) - (MeasureText("Press Right Shift to Menu", 40) / 2), 700, 40, RED);
+
                 // Save score
                 FILE *scoreHistory = fopen("scores.txt", "a");
                 if (saveScore)
                 {
                     fprintf(scoreHistory, "[%s]\t%d\n", playerName, score);
                     saveScore = false;
+                    PlaySound(gameOverSound);
                 }
                 fclose(scoreHistory);
 
-                if (!menu)
-                {
-                    DrawText("Game Over!", (screenWidth / 2) - (MeasureText("Game Over!", 75) / 2), 50, 75, RED);
-                    DrawText("Press Enter to Restart", (screenWidth / 2) - (MeasureText("Press Enter to Restart", 40) / 2), 150, 40, RED);
-                    DrawText("Press Right Shift to Menu", (screenWidth / 2) - (MeasureText("Press Right Shift to Menu", 40) / 2), 700, 40, RED);
-                }
+                if(!IsSoundPlaying(menuSound) && !IsSoundPlaying(gameOverSound))
+                    PlaySound(menuSound);
 
                 if (IsKeyPressed(KEY_ENTER))
                 {
+                    StopSound(menuSound);
                     saveScore = true;
+                    PlaySound(startGameSound);
 
                     // Reset game variables here
                     ghostIdleFrame = 0;
@@ -449,27 +460,23 @@ int main()
                 {
                     gameOver = true;
                 }
-            } //else         
+            } //else      
+               
+            if (IsKeyPressed(KEY_RIGHT_SHIFT))
+            {
+                enterName = true;
+                gameOver = true;
+                menu = true;
+            }
         } //if(!menu)
 
         if (menu || gameOver)
         {
+            // Show scoreboard(COPY)
             EndgameUI();
 
-            float nameWidth = MeasureText(playerName, 30)+10;
-            DrawRectangle((screenWidth / 2) - (nameWidth / 2), 200, nameWidth, 30, BLACK);
-            DrawText(playerName, (screenWidth / 2) - (MeasureText(playerName, 30) / 2), 200, 30, WHITE);
-            // Stop soiderdance
-            StopSound(backGround);
-        }
-
-        if (menu)
-        {
             if(enterName)
             {
-                DrawText("MENU", (screenWidth / 2) - (MeasureText("MENU", 75) / 2), 50, 75, YELLOW);
-                DrawText("ENTER YOUR NAME", (screenWidth / 2) - (MeasureText("ENTER YOUR NAME", 40) / 2), 150, 40, YELLOW);
-                DrawText("Press Enter to Start", (screenWidth / 2) - (MeasureText("Press Enter to Start", 40) / 2), 700, 40, YELLOW);
                 if (IsKeyPressed(KEY_ENTER))
                 {
                     enterName = false;
@@ -477,7 +484,7 @@ int main()
 
                 int key = GetKeyPressed();
 
-                if (key >= 32 && key <= 125 && key != KEY_SPACE)
+                if (key >= 32 && key <= 125 && key != KEY_SPACE && strlen(playerName) <= 25)
                 {
                     playerName[strlen(playerName)] = (char)key;
                 }
@@ -487,8 +494,27 @@ int main()
                 }
             }
 
+            float nameWidth = MeasureText(playerName, 30)+10;
+            DrawRectangle((screenWidth / 2) - (nameWidth / 2), 200, nameWidth, 30, BLACK);
+            DrawText(playerName, (screenWidth / 2) - (MeasureText(playerName, 30) / 2), 200, 30, WHITE);
+
+            // Stop soiderdance
+            StopSound(backGroundSound);
+        }
+
+        if (menu)
+        {
+            if(!IsSoundPlaying(menuSound))
+                PlaySound(menuSound);
+
+            DrawText("MENU", (screenWidth / 2) - (MeasureText("MENU", 75) / 2), 50, 75, YELLOW);
+            DrawText("ENTER YOUR NAME", (screenWidth / 2) - (MeasureText("ENTER YOUR NAME", 40) / 2), 150, 40, YELLOW);
+            DrawText("Press Enter to Start", (screenWidth / 2) - (MeasureText("Press Enter to Start", 40) / 2), 700, 40, YELLOW);
+
             if(IsKeyPressed(KEY_ENTER))
             {
+                StopSound(menuSound);
+                PlaySound(startGameSound);
                 menu = false;
                 saveScore = true;
 
@@ -574,12 +600,12 @@ void EndgameUI()
 
         // Display the top 8 scores in the scoreboard
         int scoresToDisplay = std::min(static_cast<int>(fileScores.size()), 10); // Display up to 10 scores
-        DrawText("Name", screenWidth / 5 + 100, yOffset, 30, WHITE);
+        DrawText("Name", screenWidth / 5 + 175, yOffset, 30, WHITE);
         DrawText("Score", screenWidth * 3 / 5 + 100, yOffset, 30, WHITE);
         yOffset += 40;
         for (int i = 0; i < scoresToDisplay; ++i)
         {
-            DrawText(fileScores[i].name, screenWidth / 5 + 100, yOffset , 30, PURPLE);
+            DrawText(fileScores[i].name, screenWidth / 5 + 175, yOffset , 30, PURPLE);
             DrawText(std::to_string(fileScores[i].score).c_str(), screenWidth * 3 / 5 + 100, yOffset, 30, GREEN);
             yOffset += 40;
         }
