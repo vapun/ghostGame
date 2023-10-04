@@ -46,22 +46,25 @@ int main()
     Sound gameOverSound{LoadSound("sfx/kl-peach-game-over-iii-142453.mp3")};
     Sound menuSound{LoadSound("sfx/many-ringtones-com-3893792.mp3")};
     Sound noBulletSound{LoadSound("sfx/empty-gun-shot-6209.mp3")};
+    Sound nextLevelSound{LoadSound("sfx/80s-achievement-unlocked-94452.mp3")};
     
     // Replace the existing initialization of the player rectangle
     Rectangle player = {(screenWidth - 60) / 2, (screenHeight - 120) / 2, 60, 120};
 
     // Ghost
-     int maxGhosts = 30;
-    Rectangle ghosts[maxGhosts];
-    int ghostSpeedsX[maxGhosts];
-    int ghostSpeedsY[maxGhosts];
-    float ghostSpawnTimers;
-    const float ghostSpawnTime = 2.0f; // Ghoat will spawn every X.XX sec
+    const int reallyMaxGhosts = 100;
+    int maxGhosts = 10;
+    Rectangle ghosts[reallyMaxGhosts];
+    int ghostSpeedsX[reallyMaxGhosts];
+    int ghostSpeedsY[reallyMaxGhosts];
+    float ghostSpawnTimers = 0.0f;
+    const float ghostSpawnTimeSave = 3.0f; // Ghoat will spawn every X.XX sec
+    float ghostSpawnTime = ghostSpawnTimeSave;
     int activeGhosts = 0;
-    bool ghostActive[maxGhosts]{};
+    bool ghostActive[reallyMaxGhosts] = {false};
 
-    int ghostVanishFrame[maxGhosts];
-    int ghostAppearsFrame[maxGhosts];
+    int ghostVanishFrame[reallyMaxGhosts] = {0};
+    int ghostAppearsFrame[reallyMaxGhosts] = {0};
 
     float ghostAppearsWidth = ghostAppears.width / 6;
     float ghostAppearsHeight = ghostAppears.height;
@@ -70,14 +73,15 @@ int main()
     float ghostVanishWidth = ghostVanish.width / 7;
     float ghostVanishHeight = ghostVanish.height;
 
-    bool ghostAppeared[maxGhosts] = {false};
-    bool ghostVanished[maxGhosts] = {false};
+    bool ghostAppeared[reallyMaxGhosts] = {false};
+    bool ghostVanished[reallyMaxGhosts] = {false};
 
     // Bullet
-    int maxbullet = 20;
-    int bullet = maxbullet;
-    float reloadtime = 3;
-    float reloadtimer;
+    int maxBullet = 10;
+    int bullet = maxBullet;
+    const float reloadTimeSave = 3;
+    float reloadTime = reloadTimeSave;
+    float reloadTimer;
 
     // Game
     Rectangle crosshair = {0, 0, 30, 30};
@@ -86,194 +90,231 @@ int main()
     bool menu = true;
     bool enterName = true;
     bool saveScore = false;
+    bool pauseGame = false;
+    bool restartGame = false;
     float time = 0;
-    float level = 0;
-    float timeLevel = 0;
-    float nextStage = 5;
+    float level = 1;
+    const float nextStageSave = 5;
+    float nextStage = nextStageSave;
     int score = 0;
     int scoreLevel = 0;
     char playerName[256] = "";
+    bool getSkill = false;
+    int buffType;
 
     SetTargetFPS(60);
 
-    // Set ghost default
-    for (int i = 0; i < maxGhosts; i++)
-    {
-        ghosts[i] = {GetRandomValue(0, screenWidth), GetRandomValue(0, screenHeight), 60, 120};
-
-        ghostVanishFrame[i] = 0;
-        ghostAppearsFrame[i] = 0;
-
-        ghostAppeared[i] = false;
-        ghostVanished[i] = false;
-
-        ghostActive[i] = false;
-        ghostSpawnTimers = 0.0f;
-        ghostSpeedsX[i] = (GetRandomValue(-1, 1));
-        if (ghostSpeedsX[i] == 0)
-        {
-            ghostSpeedsY[i] = (GetRandomValue(0, 1) == 0 ? 1 : -1);
-        }
-        else
-        {
-            ghostSpeedsY[i] = (GetRandomValue(-1, 1));
-                        }
-    } //for (int i = 0; i < maxGhosts; i++)
-
+    // Game activating
     while (!WindowShouldClose())
     {
-        if (!gameOver && !menu &&!enterName)
+        if (!pauseGame)
         {
-            // BG music
-            if(!IsSoundPlaying(backGroundSound) && !IsSoundPlaying(startGameSound))
-                PlaySound(backGroundSound);
-
-            // Time
-            time += GetFrameTime();
-
-            // Handle input for spawning ghosts
-            if (IsKeyPressed(KEY_H)) 
+            if (!gameOver && !menu &&!enterName)
             {
-                ghostSpawnTimers = ghostSpawnTime;
+                // BG music
+                if(!IsSoundPlaying(backGroundSound) && !IsSoundPlaying(startGameSound))
+                    PlaySound(backGroundSound);
 
-            }
-            
-            // ghost spawning
-            ghostSpawnTimers += GetFrameTime();
-            for (int i = 0; i <= activeGhosts; i++)
-            {
-                if (!ghostActive[i])
+                // Time
+                time += GetFrameTime();
+
+                // Handle input for spawning ghosts
+                if (IsKeyPressed(KEY_H)) 
                 {
-                    if (ghostSpawnTimers >= ghostSpawnTime - timeLevel)
-                    {
-                        ghostSpawnTimers = 0.0f;
-                        ghostActive[i] = true;
-                        ghostAppeared[i] = true;
-                        PlaySound(spawningSound);
-                        activeGhosts++;
-                        ghosts[i].x = GetRandomValue(0, screenWidth);
-                        ghosts[i].y = GetRandomValue(0, screenHeight);
-                    }
+                    ghostSpawnTimers = ghostSpawnTime;
+
                 }
-            } //for (int i = 0; i <= activeGhosts; i++)
-
-            // Reloading
-            if (bullet < maxbullet)
-            {
-                reloadtimer += GetFrameTime();
-                if (reloadtimer >= reloadtime - timeLevel)
+                
+                // ghost spawning
+                ghostSpawnTimers += GetFrameTime();
+                for (int i = 0; i <= activeGhosts; i++)
                 {
-                    bullet++;
-                    PlaySound(reloadSound);
-                    reloadtimer = 0;
-                }
-            }
-
-            // Shooting ghosts when spacebar is pressed
-            if (IsKeyPressed(KEY_SPACE)) 
-            {
-                if (bullet > 0)
-                {
-                    bullet--;
-                    PlaySound(shootingSound);
-                    for (int i = 0; i < maxGhosts; i++) 
+                    if (!ghostActive[i])
                     {
-                        // Check collision between crosshair and ghost
-                        if (ghostActive[i] && CheckCollisionRecs(crosshair, ghosts[i])) 
+                        if (ghostSpawnTimers >= ghostSpawnTime)
                         {
-                            ghostVanished[i] = true;
-                            PlaySound(hitSound);
+                            ghosts[i] = {GetRandomValue(0, screenWidth), GetRandomValue(0, screenHeight), 60, 120};
+                            ghostSpeedsX[i] = (GetRandomValue(-1, 1));
+                            if (ghostSpeedsX[i] == 0)
+                            {
+                                ghostSpeedsY[i] = (GetRandomValue(0, 1) == 0 ? 1 : -1);
+                            }
+                            else
+                            {
+                                ghostSpeedsY[i] = (GetRandomValue(-1, 1));
+                            }
+
+                            ghostSpawnTimers = 0.0f;
+                            ghostActive[i] = true;
+                            ghostAppeared[i] = true;
+                            PlaySound(spawningSound);
+                            activeGhosts++;
+                            ghosts[i].x = GetRandomValue(0, screenWidth);
+                            ghosts[i].y = GetRandomValue(0, screenHeight);
                         }
                     }
+                } //for (int i = 0; i <= activeGhosts; i++)
+
+                // Reloading
+                if (bullet < maxBullet)
+                {
+                    reloadTimer += GetFrameTime();
+                    if (reloadTimer >= reloadTime)
+                    // if (reloadtimer >= reloadtime)
+                    {
+                        bullet++;
+                        PlaySound(reloadSound);
+                        reloadTimer = 0;
+                    }
+                }
+
+                // Shooting ghosts when spacebar is pressed
+                if (IsKeyPressed(KEY_SPACE)) 
+                {
+                    if (bullet > 0)
+                    {
+                        bullet--;
+                        PlaySound(shootingSound);
+                        for (int i = 0; i < maxGhosts; i++) 
+                        {
+                            // Check collision between crosshair and ghost
+                            if (ghostActive[i] && CheckCollisionRecs(crosshair, ghosts[i])) 
+                            {
+                                ghostVanished[i] = true;
+                                PlaySound(hitSound);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        PlaySound(noBulletSound);
+                    }
+                } //if (IsKeyPressed(KEY_SPACE)) 
+
+                // Control rosshair
+                if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
+                    player.x += 7;
+                if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
+                    player.x -= 7;
+                if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
+                    player.y += 7;
+                if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
+                    player.y -= 7;
+            } //if (!gameOver && !menu &&!enterName)
+
+            // Level++
+            if(scoreLevel >= nextStage)
+            {
+                scoreLevel = 0;
+                level++;
+                PlaySound(nextLevelSound);
+                getSkill = true;    
+                nextStage += 5;
+            }
+
+            // Give a buff to player
+            if(getSkill)
+            {
+                buffType = GetRandomValue(0,2);
+                if(buffType == 0)
+                {
+                    reloadTime -= 0.5; 
+                }
+                else if(buffType == 1)
+                {
+                    ghostSpawnTime -= 0.5;
+                }
+                else if(buffType == 2)
+                {
+                    maxGhosts += 5;
                 }
                 else
                 {
-                    PlaySound(noBulletSound);
+
                 }
-            } //if (IsKeyPressed(KEY_SPACE)) 
 
-            // Control rosshair
-            if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
-                player.x += 7;
-            if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
-                player.x -= 7;
-            if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
-                player.y += 7;
-            if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
-                player.y -= 7;
-        } //if (!gameOver && !menu &&!enterName)
+                getSkill = false;
+            }
 
-        // Level++
-        timeLevel = sqrt(level)/5;
-        if(scoreLevel >= nextStage)
-        {
-            scoreLevel = 0;
-            level++;
-        }
+            // Ensure player stays within window boundaries
+            if (player.x < 0)
+                player.x = 0;
+            if (player.x + player.width > screenWidth)
+                player.x = screenWidth - player.width;
+            if (player.y < 0)
+                player.y = 0;
+            if (player.y + player.height > screenHeight)
+                player.y = screenHeight - player.height;
 
-        // Ensure player stays within window boundaries
-        if (player.x < 0)
-            player.x = 0;
-        if (player.x + player.width > screenWidth)
-            player.x = screenWidth - player.width;
-        if (player.y < 0)
-            player.y = 0;
-        if (player.y + player.height > screenHeight)
-            player.y = screenHeight - player.height;
-
-        for (int i = 0; i <= maxGhosts; i++)
-        {
-            if (ghostActive[i] && !ghostVanished[i])
+            // Ghost movement
+            for (int i = 0; i <= maxGhosts; i++)
             {
-                if (!ghostAppeared[i])
+                if (!ghostAppeared[i] &&& ghostActive[i] && !ghostVanished[i])
+                { 
+                    ghosts[i].x += ghostSpeedsX[i] * scale ;
+                    ghosts[i].y += ghostSpeedsY[i] * scale ;
+                } //if (ghostActive[i])
+
+                // Check boundaries and prevent ghosts from moving outside the screen
+                if (ghosts[i].x < 0)
                 {
-                    ghosts[i].x += ghostSpeedsX[i] * scale;
-                    ghosts[i].y += ghostSpeedsY[i] * scale;
+                    ghosts[i].x = 0;
+                    ghostSpeedsX[i] = 1;
                 }
-            } //if (ghostActive[i])
+                if (ghosts[i].x + ghostIdleWidth > screenWidth)
+                {
+                    ghosts[i].x = screenWidth - ghostIdleWidth;
+                    ghostSpeedsX[i] = -1;
+                }
+                if (ghosts[i].y < 0)
+                {
+                    ghosts[i].y = 0;
+                    ghostSpeedsY[i] = 1;
+                }
+                if (ghosts[i].y + ghostIdleHeight*2 > screenHeight)
+                {
+                    ghosts[i].y = screenHeight - ghostIdleHeight*2;   
+                    ghostSpeedsY[i] = -1;
+                }
+            } //for (int i = 0; i <= activeGhosts; i++)
 
-            // Check boundaries and prevent ghosts from moving outside the screen
-            if (ghosts[i].x < 0)
-            {
-                ghosts[i].x = 0;
-                ghostSpeedsX[i] = 1;
-            }
-            if (ghosts[i].x + ghostIdleWidth > screenWidth)
-            {
-                ghosts[i].x = screenWidth - ghostIdleWidth;
-                ghostSpeedsX[i] = -1;
-            }
-            if (ghosts[i].y < 0)
-            {
-                ghosts[i].y = 0;
-                ghostSpeedsY[i] = 1;
-            }
-            if (ghosts[i].y + ghostIdleHeight*2 > screenHeight)
-            {
-                ghosts[i].y = screenHeight - ghostIdleHeight*2;   
-                ghostSpeedsY[i] = -1;
-            }
-        } //for (int i = 0; i <= activeGhosts; i++)
+            crosshair.x = player.x + player.width / 2 - crosshair.width / 2;
+            crosshair.y = player.y + player.height / 2 - crosshair.height / 2;
+        } //if (!pauseGame)
 
-        crosshair.x = player.x + player.width / 2 - crosshair.width / 2;
-        crosshair.y = player.y + player.height / 2 - crosshair.height / 2;
+        if(IsKeyPressed(KEY_E) && !menu && !gameOver)
+        {
+            pauseGame = !pauseGame;
+            if(IsSoundPlaying(backGroundSound))
+            {
+                PauseSound(backGroundSound);
+            }
+            else
+            {
+                ResumeSound(backGroundSound);
+            }
+        }
 
         BeginDrawing();
         ClearBackground(BLACK);
         DrawTextureEx(background, {0, 0}, 0.f, scale, WHITE);
         DrawRectangleRec(player, BLANK);
 
-        // Draw text
-        DrawText(TextFormat("Player Name: [%s]", playerName), 10, 10, 20, WHITE);
-        DrawText(TextFormat("Score: %d", score), 10, 40, 20, GREEN);
-        DrawText(TextFormat("Level: %.0f", level), 10, 70, 20, GREEN);
-        DrawText(TextFormat("Ghost: %d/%d", activeGhosts ,maxGhosts), 10, 100, 20, PURPLE);
-        DrawText(TextFormat("Spawning: %.1f/%.1f", ghostSpawnTimers, ghostSpawnTime - timeLevel), 10, 130, 20, PURPLE);
-        DrawText(TextFormat("Bullet: %d/%d", bullet, maxbullet), 10, 160, 20, YELLOW);
-        DrawText(TextFormat("Reloading: %.1f/%.1f", reloadtimer, reloadtime - timeLevel), 10, 190, 20, YELLOW);
-        DrawText(TextFormat("Time: %.1f", time), 10, 220, 20, WHITE);
-        DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 250, 20, WHITE);
-        //DrawText(TextFormat("test: %.3f", timeLevel), 10, 280, 20, WHITE);
+        if(!gameOver && !menu)
+        {
+            // Draw text
+            DrawText(TextFormat("CONSCIOUSNESS: %d%%", 100 - (activeGhosts * 100 / maxGhosts)), 10, 10, 30, PURPLE);
+            DrawText(TextFormat("Player Name: [%s]", playerName), 10, 50, 20, WHITE);
+            DrawText(TextFormat("Score: %d", score), 10, 80, 20, GREEN);
+            DrawText(TextFormat("Level: %.0f", level), 10, 110, 20, GREEN);
+            DrawText(TextFormat("Ghost Limit: %d/%d", activeGhosts, maxGhosts), 10, 140, 20, PURPLE);
+            DrawText(TextFormat("Spawning: %.1f/%.1f", ghostSpawnTimers, ghostSpawnTime), 10, 170, 20, PURPLE);
+            DrawText(TextFormat("Bullet: %d/%d", bullet, maxBullet), 10, 200, 20, YELLOW);
+            DrawText(TextFormat("Reloading: %.1f/%.1f", reloadTimer, reloadTime), 10, 230, 20, YELLOW);
+            DrawText(TextFormat("Time: %.1f", time), 10, 260, 20, WHITE);
+            DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 290, 20, WHITE);
+            DrawText(TextFormat("Next Level: %d/%.0f", scoreLevel, nextStage), 10, 320, 20, WHITE);
+        }
 
         ghostIdleRunningTime += GetFrameTime();
         if (ghostIdleRunningTime >= updateTime)
@@ -345,7 +386,7 @@ int main()
                 if (ghostVanishFrame[i] > 6)
                 {
                     activeGhosts--;
-                    score += 1+level; // Increase score
+                    score += level; // Increase score
                     scoreLevel += 1;
                     ghostActive[i] = false; // Ghost disappears        
                     ghostSpeedsX[i] = (GetRandomValue(-1, 1));
@@ -386,6 +427,19 @@ int main()
             gameOver = true;
         }
 
+        if(pauseGame)
+        {
+            DrawText("PAUSE", (screenWidth / 2) - (MeasureText("PAUSE", 75) / 2), 50, 75, YELLOW);
+            DrawText("Press E to Continue", (screenWidth / 2) - (MeasureText("Press E to Continue", 40) / 2), 150, 40, YELLOW);
+            DrawText("Press Enter to Endgame", (screenWidth / 2) - (MeasureText("Press Enter to Endgame", 40) / 2), 700, 40, YELLOW);
+        }
+
+        if(IsSoundPlaying(nextLevelSound) && !gameOver && !menu)
+        {
+            DrawText(TextFormat("- LEVEL %.0f -", level), (screenWidth / 2) - (MeasureText(TextFormat("LEVEL %.0f", level), 75) / 2), 50, 75, GREEN);
+            //DrawText("Press Right Shift to Menu", (screenWidth / 2) - (MeasureText("Press Right Shift to Menu", 40) / 2), 700, 40, GREEN); test
+        }
+
         if(!menu)
         {
             // Restart the game if Enter key is pressed
@@ -410,60 +464,27 @@ int main()
 
                 if (IsKeyPressed(KEY_ENTER))
                 {
-                    StopSound(menuSound);
-                    saveScore = true;
-                    PlaySound(startGameSound);
-
-                    // Reset game variables here
-                    ghostIdleFrame = 0;
-                    ghostAppearsRunningTime = 0;
-                    ghostIdleRunningTime = 0;
-                    ghostVanishRunningTime = 0;
-
-                    activeGhosts = 0;
-                    score = 0;
-                    scoreLevel = 0;
-                    level = 0;
-                    time = 0;
-                    bullet = maxbullet;
-                    reloadtimer = 0;
-
-                    for (int i = 0; i < maxGhosts; i++)
-                    {
-                        ghostVanishFrame[i] = 0;
-                        ghostAppearsFrame[i] = 0;
-
-                        ghostAppeared[i] = false;
-                        ghostVanished[i] = false;
-
-                        ghostActive[i] = false;
-                        ghostSpawnTimers = 0.0f;
-                        ghostSpeedsX[i] = (GetRandomValue(-1, 1));
-                        if (ghostSpeedsX[i] == 0)
-                        {
-                            ghostSpeedsY[i] = (GetRandomValue(0, 1) == 0 ? 1 : -1);
-                        }
-                        else
-                        {
-                            ghostSpeedsY[i] = (GetRandomValue(-1, 1));
-                        }
-                    } //for (int i = 0; i < maxGhosts; i++)
-
-                    player.x = (screenWidth - 60) / 2;
-                    player.y = (screenHeight - 120) / 2;
-                    gameOver = false;
+                    restartGame = true;
                 } //if (IsKeyPressed(KEY_ENTER))
             } //if (gameOver && !menu)
             else 
             {
                 if(IsKeyPressed(KEY_ENTER))
                 {
+                    if(pauseGame)
+                    {
+                        pauseGame = !pauseGame;
+                    }
                     gameOver = true;
                 }
             } //else      
-               
+
             if (IsKeyPressed(KEY_RIGHT_SHIFT))
             {
+                if(pauseGame)
+                {
+                    pauseGame = !pauseGame;
+                }
                 enterName = true;
                 gameOver = true;
                 menu = true;
@@ -477,7 +498,7 @@ int main()
 
             if(enterName)
             {
-                if (IsKeyPressed(KEY_ENTER))
+                if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
                 {
                     enterName = false;
                 }
@@ -494,6 +515,7 @@ int main()
                 }
             }
 
+            // Show player name
             float nameWidth = MeasureText(playerName, 30)+10;
             DrawRectangle((screenWidth / 2) - (nameWidth / 2), 200, nameWidth, 30, BLACK);
             DrawText(playerName, (screenWidth / 2) - (MeasureText(playerName, 30) / 2), 200, 30, WHITE);
@@ -504,60 +526,87 @@ int main()
 
         if (menu)
         {
-            if(!IsSoundPlaying(menuSound))
+            if(!IsSoundPlaying(menuSound) && !IsSoundPlaying(gameOverSound))
                 PlaySound(menuSound);
 
             DrawText("MENU", (screenWidth / 2) - (MeasureText("MENU", 75) / 2), 50, 75, YELLOW);
             DrawText("ENTER YOUR NAME", (screenWidth / 2) - (MeasureText("ENTER YOUR NAME", 40) / 2), 150, 40, YELLOW);
-            DrawText("Press Enter to Start", (screenWidth / 2) - (MeasureText("Press Enter to Start", 40) / 2), 700, 40, YELLOW);
+            DrawText("Press Enter/Space to Start", (screenWidth / 2) - (MeasureText("Press Enter/Space to Start", 40) / 2), 700, 40, YELLOW);
 
-            if(IsKeyPressed(KEY_ENTER))
+            if( (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) )
             {
-                StopSound(menuSound);
-                PlaySound(startGameSound);
-                menu = false;
-                saveScore = true;
-
-                // Reset game variables here
-                ghostIdleFrame = 0;
-                ghostAppearsRunningTime = 0;
-                ghostIdleRunningTime = 0;
-                ghostVanishRunningTime = 0;
-
-                activeGhosts = 0;
-                score = 0;
-                scoreLevel = 0;
-                level = 0;
-                time = 0;
-                bullet = maxbullet;
-                reloadtimer = 0;
-
-                for (int i = 0; i < maxGhosts; i++)
-                {
-                    ghostVanishFrame[i] = 0;
-                    ghostAppearsFrame[i] = 0;
-
-                    ghostAppeared[i] = false;
-                    ghostVanished[i] = false;
-
-                    ghostActive[i] = false;
-                    ghostSpawnTimers = 0.0f;
-                    ghostSpeedsX[i] = (GetRandomValue(-1, 1));
-                    if (ghostSpeedsX[i] == 0)
-                    {
-                        ghostSpeedsY[i] = (GetRandomValue(0, 1) == 0 ? 1 : -1);
-                    }
-                    else
-                    {
-                        ghostSpeedsY[i] = (GetRandomValue(-1, 1));
-                    }
-                } //for (int i = 0; i < maxGhosts; i++)
-
-                player.x = (screenWidth - 60) / 2;
-                player.y = (screenHeight - 120) / 2;
-                gameOver = false;
-            } //if(IsKeyPressed(KEY_ENTER))
+                restartGame = true;
+            }
         } //if (menu)
+
+        // Reset game variables here
+        if(restartGame)
+        {
+            // Clear sound
+            StopSound(menuSound);
+            StopSound(gameOverSound);
+            PlaySound(startGameSound);
+
+            // Reset game
+            saveScore = true;
+            score = 0;
+            scoreLevel = 0;
+            nextStage = nextStageSave;
+            level = 1;
+            time = 0; 
+            menu = false;
+
+            // Reset ghosts
+            ghostIdleFrame = 0;
+            ghostAppearsRunningTime = 0;
+            ghostIdleRunningTime = 0;
+            ghostVanishRunningTime = 0;
+            ghostSpawnTime = ghostSpawnTimeSave;
+            activeGhosts = 0;
+
+            // Reset crosshair
+            player.x = (screenWidth - 60) / 2;
+            player.y = (screenHeight - 120) / 2;   
+
+            // Reset bullet
+            bullet = maxBullet;
+            reloadTimer = 0;
+            reloadTime = reloadTimeSave;
+
+            // Close pause game
+            if(pauseGame)
+            {
+                pauseGame = false;
+            }
+
+            // Reset ghost array
+            for (int i = 0; i < maxGhosts; i++)
+            {
+                ghostVanishFrame[i] = 0;
+                ghostAppearsFrame[i] = 0;
+
+                ghostAppeared[i] = false;
+                ghostVanished[i] = false;
+
+                ghostActive[i] = false;
+                ghostSpawnTimers = 0.0f;
+                ghostSpeedsX[i] = (GetRandomValue(-1, 1));
+                if (ghostSpeedsX[i] == 0)
+                {
+                    ghostSpeedsY[i] = (GetRandomValue(0, 1) == 0 ? 1 : -1);
+                }
+                else
+                {
+                    ghostSpeedsY[i] = (GetRandomValue(-1, 1));
+                }
+            } //for (int i = 0; i < maxGhosts; i++)   
+
+            // Start game
+            gameOver = false;     
+
+            // Reset game variables success
+            restartGame = false;
+        } //if(restartGame)
 
         EndDrawing();
     } //while (!WindowShouldClose())
