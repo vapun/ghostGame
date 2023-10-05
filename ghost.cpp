@@ -53,7 +53,8 @@ int main()
 
     // Ghost
     const int reallyMaxGhosts = 100;
-    int maxGhosts = 10;
+    const int maxGhostsSave = 10;
+    int maxGhosts = maxGhostsSave;
     Rectangle ghosts[reallyMaxGhosts];
     int ghostSpeedsX[reallyMaxGhosts];
     int ghostSpeedsY[reallyMaxGhosts];
@@ -101,15 +102,22 @@ int main()
     char playerName[256] = "";
     bool getSkill = false;
     int buffType;
+    float nameTime = 0;
 
     SetTargetFPS(60);
 
     // Game activating
     while (!WindowShouldClose())
     {
+        // Game graphic
+        BeginDrawing();
+        ClearBackground(BLACK);
+        DrawTextureEx(background, {0, 0}, 0.f, scale, WHITE);
+        DrawRectangleRec(player, BLANK);
+        
         if (!pauseGame)
         {
-            if (!gameOver && !menu &&!enterName)
+            if (!gameOver && !menu && !enterName)
             {
                 // BG music
                 if(!IsSoundPlaying(backGroundSound) && !IsSoundPlaying(startGameSound))
@@ -117,13 +125,6 @@ int main()
 
                 // Time
                 time += GetFrameTime();
-
-                // Handle input for spawning ghosts
-                if (IsKeyPressed(KEY_H)) 
-                {
-                    ghostSpawnTimers = ghostSpawnTime;
-
-                }
                 
                 // ghost spawning
                 ghostSpawnTimers += GetFrameTime();
@@ -200,7 +201,13 @@ int main()
                     player.y += 7;
                 if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
                     player.y -= 7;
-            } //if (!gameOver && !menu &&!enterName)
+
+                // Handle input for spawning ghosts
+                if (IsKeyPressed(KEY_H)) 
+                {
+                    ghostSpawnTimers = ghostSpawnTime;
+                }
+            } //if (!gameOver && !menu && !enterName)
 
             // Level++
             if(scoreLevel >= nextStage)
@@ -210,30 +217,6 @@ int main()
                 PlaySound(nextLevelSound);
                 getSkill = true;    
                 nextStage += 5;
-            }
-
-            // Give a buff to player
-            if(getSkill)
-            {
-                buffType = GetRandomValue(0,2);
-                if(buffType == 0)
-                {
-                    reloadTime -= 0.5; 
-                }
-                else if(buffType == 1)
-                {
-                    ghostSpawnTime -= 0.5;
-                }
-                else if(buffType == 2)
-                {
-                    maxGhosts += 5;
-                }
-                else
-                {
-
-                }
-
-                getSkill = false;
             }
 
             // Ensure player stays within window boundaries
@@ -278,13 +261,40 @@ int main()
                 }
             } //for (int i = 0; i <= activeGhosts; i++)
 
-            crosshair.x = player.x + player.width / 2 - crosshair.width / 2;
-            crosshair.y = player.y + player.height / 2 - crosshair.height / 2;
+            // Stop animation
+            ghostIdleRunningTime += GetFrameTime();
+
+            if (ghostIdleRunningTime >= updateTime)
+            {
+                ghostIdleFrame++;
+                ghostIdleRunningTime = 0;
+
+                if (ghostIdleFrame >= 7)
+                {
+                    ghostIdleFrame = 0;
+                }
+            } //if (ghostIdleRunningTime >= updateTime)
         } //if (!pauseGame)
+
+        // Crosshair important
+        crosshair.x = player.x + player.width / 2 - crosshair.width / 2;
+        crosshair.y = player.y + player.height / 2 - crosshair.height / 2;
 
         if(IsKeyPressed(KEY_E) && !menu && !gameOver)
         {
+            // Change pause and continue
             pauseGame = !pauseGame;
+
+            // Pause sound
+            if(IsSoundPlaying(startGameSound))
+            {
+                PauseSound(startGameSound);
+            }
+            else
+            {
+                ResumeSound(startGameSound);
+            }
+
             if(IsSoundPlaying(backGroundSound))
             {
                 PauseSound(backGroundSound);
@@ -293,17 +303,85 @@ int main()
             {
                 ResumeSound(backGroundSound);
             }
+
+            if(IsSoundPlaying(nextLevelSound))
+            {
+                PauseSound(nextLevelSound);
+            }
+            else
+            {
+                ResumeSound(nextLevelSound);
+            }
+
+            if(IsSoundPlaying(reloadSound))
+            {
+                PauseSound(reloadSound);
+            }
+            else
+            {
+                ResumeSound(reloadSound);
+            }
+
+            if(IsSoundPlaying(spawningSound))
+            {
+                PauseSound(spawningSound);
+            }
+            else
+            {
+                ResumeSound(spawningSound);
+            }
+
+            if(IsSoundPlaying(shootingSound))
+            {
+                PauseSound(shootingSound);
+            }
+            else
+            {
+                ResumeSound(shootingSound);
+            }
+
+            if(IsSoundPlaying(hitSound))
+            {
+                PauseSound(hitSound);
+            }
+            else
+            {
+                ResumeSound(hitSound);
+            }
+
+            if(IsSoundPlaying(noBulletSound))
+            {
+                PauseSound(noBulletSound);
+            }
+            else
+            {
+                ResumeSound(noBulletSound);
+            }
         }
 
-        BeginDrawing();
-        ClearBackground(BLACK);
-        DrawTextureEx(background, {0, 0}, 0.f, scale, WHITE);
-        DrawRectangleRec(player, BLANK);
-
-        if(!gameOver && !menu)
+        if (!gameOver && !menu)
         {
             // Draw text
-            DrawText(TextFormat("CONSCIOUSNESS: %d%%", 100 - (activeGhosts * 100 / maxGhosts)), 10, 10, 30, PURPLE);
+            int cons =  100 - (activeGhosts * 100 / maxGhosts);
+            Color consColor;
+            if (cons >= 75)
+            {
+                consColor = GREEN;
+            }
+            else if (cons >= 50)
+            {
+                consColor = YELLOW;
+            }
+            else if (cons >= 25)
+            {
+                consColor = ORANGE;
+            }
+            else
+            {
+                consColor = RED;
+            }
+            DrawText(TextFormat("CONSCIOUSNESS: %d%%", cons), 10, 10, 30, consColor);
+
             DrawText(TextFormat("Player Name: [%s]", playerName), 10, 50, 20, WHITE);
             DrawText(TextFormat("Score: %d", score), 10, 80, 20, GREEN);
             DrawText(TextFormat("Level: %.0f", level), 10, 110, 20, GREEN);
@@ -312,21 +390,8 @@ int main()
             DrawText(TextFormat("Bullet: %d/%d", bullet, maxBullet), 10, 200, 20, YELLOW);
             DrawText(TextFormat("Reloading: %.1f/%.1f", reloadTimer, reloadTime), 10, 230, 20, YELLOW);
             DrawText(TextFormat("Time: %.1f", time), 10, 260, 20, WHITE);
-            DrawText(TextFormat("Crosshair: %.0f,%.0f", crosshair.x,crosshair.y), 10, 290, 20, WHITE);
-            DrawText(TextFormat("Next Level: %d/%.0f", scoreLevel, nextStage), 10, 320, 20, WHITE);
+            DrawText(TextFormat("Next Level: %d/%.0f", scoreLevel, nextStage), 10, 290, 20, WHITE);
         }
-
-        ghostIdleRunningTime += GetFrameTime();
-        if (ghostIdleRunningTime >= updateTime)
-        {
-            ghostIdleFrame++;
-            ghostIdleRunningTime = 0;
-
-            if (ghostIdleFrame >= 7)
-            {
-                ghostIdleFrame = 0;
-            }
-        } //if (ghostIdleRunningTime >= updateTime)
 
         // Draw all active ghosts
         for (int i = 0; i < maxGhosts; i++)
@@ -348,7 +413,11 @@ int main()
                     Rectangle sourceAppears{ghostAppearsFrame[i] * ghostAppearsWidth, 0.f, faceRight * ghostAppearsWidth, ghostAppearsHeight};
                     DrawTexturePro(ghostAppears, sourceAppears, {ghosts[i].x - ghostAppearsWidth + 4, ghosts[i].y - ghostAppearsHeight + 40, ghostAppearsWidth * scale, ghostAppearsHeight * scale}, {0.f, 0.f}, 0.f, WHITE);
 
-                    ghostAppearsRunningTime += GetFrameTime();
+                    if (!pauseGame)
+                    {
+                        ghostAppearsRunningTime += GetFrameTime();
+                    }
+
                     if (ghostAppearsRunningTime >= updateTime)
                     {
                         ghostAppearsFrame[i]++;
@@ -376,7 +445,11 @@ int main()
                 Rectangle sourceVanish{ghostVanishFrame[i] * ghostVanishWidth, 0.f, faceRight * ghostVanishWidth, ghostVanishHeight};
                 DrawTexturePro(ghostVanish, sourceVanish, {ghosts[i].x - ghostVanishWidth + 4, ghosts[i].y - ghostVanishHeight + 20, ghostVanishWidth * scale, ghostVanishHeight * scale}, {0.f, 0.f}, 0.f, WHITE);
 
-                ghostVanishRunningTime += GetFrameTime();
+                if (!pauseGame)
+                {
+                    ghostVanishRunningTime += GetFrameTime();
+                }
+
                 if (ghostVanishRunningTime >= updateTime)
                 {
                     ghostVanishFrame[i]++;
@@ -406,15 +479,15 @@ int main()
 
         // Draw crosshair
         crosshairColor = YELLOW;
-        for (int i = 0; i < maxGhosts; i++) 
+        for(int i = 0; i < maxGhosts; i++) 
         {
-            if (ghostActive[i] && CheckCollisionRecs(crosshair, ghosts[i])) 
+            if(ghostActive[i] && CheckCollisionRecs(crosshair, ghosts[i])) 
             {
                 crosshairColor = RED;
             }
         } //for (int i = 0; i < maxGhosts; i++) 
 
-        if (!gameOver)
+        if(!gameOver)
         {
             DrawRectangle(crosshair.x - 10, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
             DrawRectangle(crosshair.x + crosshair.width, crosshair.y + crosshair.height / 2 - 1, 10, 3, crosshairColor);
@@ -422,7 +495,7 @@ int main()
             DrawRectangle(crosshair.x + crosshair.width / 2 - 1, crosshair.y + crosshair.height, 3, 10, crosshairColor);
         }
 
-        if (activeGhosts >= maxGhosts)
+        if(activeGhosts >= maxGhosts)
         {
             gameOver = true;
         }
@@ -434,16 +507,52 @@ int main()
             DrawText("Press Enter to Endgame", (screenWidth / 2) - (MeasureText("Press Enter to Endgame", 40) / 2), 700, 40, YELLOW);
         }
 
+        // Give a buff to player
+        if(getSkill)
+        {
+            buffType = GetRandomValue(0,2);
+            if(buffType == 0)
+            {
+                reloadTime -= 0.5; 
+            }
+            else if(buffType == 1)
+            {
+                ghostSpawnTime -= 0.5;
+            }
+            else if(buffType == 2)
+            {
+                maxGhosts += 5;
+            }
+            else
+            {
+
+            }
+
+            getSkill = false;
+        }
+
         if(IsSoundPlaying(nextLevelSound) && !gameOver && !menu)
         {
-            DrawText(TextFormat("- LEVEL %.0f -", level), (screenWidth / 2) - (MeasureText(TextFormat("LEVEL %.0f", level), 75) / 2), 50, 75, GREEN);
-            //DrawText("Press Right Shift to Menu", (screenWidth / 2) - (MeasureText("Press Right Shift to Menu", 40) / 2), 700, 40, GREEN); test
+            DrawText(TextFormat("- LEVEL %.0f -", level), (screenWidth / 2) - (MeasureText(TextFormat("- LEVEL %.0f -", level), 75) / 2), 50, 75, GREEN);
+            if(buffType == 0)
+            {
+                DrawText("Reduce Reload Time", (screenWidth / 2) - (MeasureText("Reduce Reload Time", 40) / 2), 700, 40, GREEN);
+            }
+            else if(buffType == 1)
+            {
+                DrawText("Reduce Ghost Spawn Time", (screenWidth / 2) - (MeasureText("Reduce Ghost Spawn Time", 40) / 2), 700, 40, GREEN);
+            }
+            else if(buffType == 2)
+            {
+                DrawText("Increase Consciousness", (screenWidth / 2) - (MeasureText("Increase Consciousness", 40) / 2), 700, 40, GREEN);
+            }
+
         }
 
         if(!menu)
         {
             // Restart the game if Enter key is pressed
-            if (gameOver)
+            if(gameOver)
             {
                 DrawText("Game Over!", (screenWidth / 2) - (MeasureText("Game Over!", 75) / 2), 50, 75, RED);
                 DrawText("Press Enter to Restart", (screenWidth / 2) - (MeasureText("Press Enter to Restart", 40) / 2), 150, 40, RED);
@@ -451,7 +560,7 @@ int main()
 
                 // Save score
                 FILE *scoreHistory = fopen("scores.txt", "a");
-                if (saveScore)
+                if(saveScore)
                 {
                     fprintf(scoreHistory, "[%s]\t%d\n", playerName, score);
                     saveScore = false;
@@ -462,31 +571,33 @@ int main()
                 if(!IsSoundPlaying(menuSound) && !IsSoundPlaying(gameOverSound))
                     PlaySound(menuSound);
 
-                if (IsKeyPressed(KEY_ENTER))
+                if(IsKeyPressed(KEY_ENTER))
                 {
                     restartGame = true;
                 } //if (IsKeyPressed(KEY_ENTER))
             } //if (gameOver && !menu)
             else 
             {
-                if(IsKeyPressed(KEY_ENTER))
+                if (IsKeyPressed(KEY_ENTER))
                 {
-                    if(pauseGame)
+                    if (pauseGame)
                     {
-                        pauseGame = !pauseGame;
+                        pauseGame = false;
                     }
+
                     gameOver = true;
                 }
             } //else      
 
             if (IsKeyPressed(KEY_RIGHT_SHIFT))
             {
-                if(pauseGame)
+                if (pauseGame)
                 {
                     pauseGame = !pauseGame;
                 }
-                enterName = true;
+
                 gameOver = true;
+                enterName = true;
                 menu = true;
             }
         } //if(!menu)
@@ -498,27 +609,43 @@ int main()
 
             if(enterName)
             {
-                if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
+                if ((IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) && strlen(playerName) != 0)
                 {
                     enterName = false;
+                }
+
+                if ((IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) && strlen(playerName) == 0)
+                {
+                    PlaySound(shootingSound);
                 }
 
                 int key = GetKeyPressed();
 
                 if (key >= 32 && key <= 125 && key != KEY_SPACE && strlen(playerName) <= 25)
                 {
+                    PlaySound(noBulletSound);
                     playerName[strlen(playerName)] = (char)key;
                 }
                 else if (key == KEY_BACKSPACE && strlen(playerName) > 0)
                 {
+                    PlaySound(shootingSound);
                     playerName[strlen(playerName) - 1] = '\0';
                 }
             }
 
             // Show player name
-            float nameWidth = MeasureText(playerName, 30)+10;
-            DrawRectangle((screenWidth / 2) - (nameWidth / 2), 200, nameWidth, 30, BLACK);
-            DrawText(playerName, (screenWidth / 2) - (MeasureText(playerName, 30) / 2), 200, 30, WHITE);
+            nameTime += GetFrameTime();
+            if (nameTime >= 0.5)
+            {
+                float nameWidth = MeasureText(playerName, 30)+10;
+                DrawRectangle((screenWidth / 2) - (nameWidth / 2), 200, nameWidth, 30, BLACK);
+                DrawText(playerName, (screenWidth / 2) - (MeasureText(playerName, 30) / 2), 200, 30, WHITE);
+                if (nameTime >= 1.25)
+                {
+                    nameTime = 0;
+                }
+            }
+
 
             // Stop soiderdance
             StopSound(backGroundSound);
@@ -531,9 +658,13 @@ int main()
 
             DrawText("MENU", (screenWidth / 2) - (MeasureText("MENU", 75) / 2), 50, 75, YELLOW);
             DrawText("ENTER YOUR NAME", (screenWidth / 2) - (MeasureText("ENTER YOUR NAME", 40) / 2), 150, 40, YELLOW);
-            DrawText("Press Enter/Space to Start", (screenWidth / 2) - (MeasureText("Press Enter/Space to Start", 40) / 2), 700, 40, YELLOW);
+            if (strlen(playerName) > 0)
+            {
+                DrawText("Press Enter/Space to Start", (screenWidth / 2) - (MeasureText("Press Enter/Space to Start", 40) / 2), 700, 40, YELLOW);
+            }
 
-            if( (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) )
+            // Srat game
+            if((IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) && strlen(playerName) > 0)
             {
                 restartGame = true;
             }
@@ -545,6 +676,7 @@ int main()
             // Clear sound
             StopSound(menuSound);
             StopSound(gameOverSound);
+            StopSound(nextLevelSound);
             PlaySound(startGameSound);
 
             // Reset game
@@ -557,6 +689,7 @@ int main()
             menu = false;
 
             // Reset ghosts
+            maxGhosts = maxGhostsSave;
             ghostIdleFrame = 0;
             ghostAppearsRunningTime = 0;
             ghostIdleRunningTime = 0;
